@@ -31,6 +31,7 @@ jobs:
       - name: Add Gitee to known hosts
         run: |
           ssh-keyscan gitee.com >> ~/.ssh/known_hosts
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
     
       - uses: lukka/get-cmake@latest
 
@@ -89,7 +90,7 @@ jobs:
         shell: pwsh
         run: |
           $env:GIT_TRACE = "1"
-          git clone git@gitee.com:charlesabc/quick-print.git
+          git clone https://oauth2:${{ secrets.GITHUB_TOKEN }}@github.com/quickprint-soft/quick-print.git 
         
           # git clone git@gitee.com:charlesabc/quick-print.git
           # git clone https://oauth2:${{ secrets.GITEE_TOKEN }}@gitee.com/charlesabc/quick-print.git 
