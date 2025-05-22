@@ -11,6 +11,11 @@ env:
 # game
   DEFAULT_DDING_SECRET: 'SEC618a0dffd91ebf7db4c9c00e2a82b863bc6181858cadbdbf1655ca6dcd2fd1cc'
   DEFAULT_DDING_TOKEN: '4e27925ce9df0372171763c071b36bb442cdbf296f315484b9cb165f331da225'
+
+concurrency:
+  group: build-latest
+  cancel-in-progress: true
+  
 jobs:
   msw-msvs:
     runs-on: windows-${{ matrix.vsversion }}
