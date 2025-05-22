@@ -39,6 +39,10 @@ jobs:
         with:
           submodules: recursive
 
+      - name: show payload
+        run: |
+          echo "Client payload: ${{ toJson(github.event.client_payload) }}"
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
