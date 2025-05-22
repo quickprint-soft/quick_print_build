@@ -125,8 +125,8 @@ jobs:
           set PYTHONIOENCODING=utf-8
           cd quick-print/tools/external_lib
           pip install -r requirements.txt
-          python download.py --arch x64 --build_types dbg --mul true
-          python download.py --arch x64 --build_types rel --mul true
+          python download.py --arch x64 --build_types dbg --mul
+          python download.py --arch x64 --build_types rel --mul
 
 
       - name: Build with MSBuild
