@@ -89,8 +89,8 @@ jobs:
       - name: Clone repository from Gitee with trace
         shell: pwsh
         run: |
-          $env:GIT_TRACE = "1"
-          git clone https://oauth2:${{ secrets.GIT_TOKEN }}@github.com/quickprint-soft/quick-print.git 
+          # $env:GIT_TRACE = "1"
+          git clone https://oauth2:${{ secrets.GIT_TOKEN }}@ ${{ github.event.client_payload.gitaddress }}
         
           # git clone git@gitee.com:charlesabc/quick-print.git
           # git clone https://oauth2:${{ secrets.GITEE_TOKEN }}@gitee.com/charlesabc/quick-print.git 
