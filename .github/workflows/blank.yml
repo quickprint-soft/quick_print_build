@@ -28,198 +28,157 @@ jobs:
             platform: 'x64'
             vsversion: 2019
     steps:
-        - name: Install Visual C++ Redistributable
-          shell: pwsh
-          run: |
-            # 下载并安装 Visual C++ Redistributable
-            $vcRedistUrl = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
-            Invoke-WebRequest -Uri $vcRedistUrl -OutFile vc_redist.x64.exe
-            Start-Process -FilePath vc_redist.x64.exe -ArgumentList "/install", "/quiet", "/norestart" -Wait
+
+      # - name: Setup SSH
+      #   uses: webfactory/ssh-agent@v0.5.3
+      #   with:
+      #     ssh-private-key: ${{ secrets.SSH_GITEE_PRIVATE_KEY }}
+      # - name: Add Gitee to known hosts
+      #   run: |
+      #     ssh-keyscan gitee.com >> ~/.ssh/known_hosts
+      #     ssh-keyscan github.com >> ~/.ssh/known_hosts
     
-        - name: Copy CRT DLLs
-          shell: pwsh
-          run: |
-            # DLL 文件列表
-            $dllFiles = @(
-              "api-ms-win-crt-runtime-l1-1-0.dll",
-              "api-ms-win-crt-heap-l1-1-0.dll",
-              "api-ms-win-crt-math-l1-1-0.dll",
-              "api-ms-win-crt-string-l1-1-0.dll",
-              "api-ms-win-crt-stdio-l1-1-0.dll",
-              "api-ms-win-crt-filesystem-l1-1-0.dll",
-              "api-ms-win-crt-time-l1-1-0.dll",
-              "api-ms-win-crt-convert-l1-1-0.dll",
-              "api-ms-win-crt-utility-l1-1-0.dll",
-              "api-ms-win-crt-environment-l1-1-0.dll",
-              "api-ms-win-crt-locale-l1-1-0.dll"
-            )
-    
-            # 创建目标目录
-            $targetDir = "$env:GITHUB_WORKSPACE\dlls"
-            New-Item -Path $targetDir -ItemType Directory -Force
-    
-            # 从 System32 目录复制 DLL 文件
-            $sourceDir = "C:\Windows\System32"
-            foreach ($dllFile in $dllFiles) {
-              $sourcePath = Join-Path -Path $sourceDir -ChildPath $dllFile
-              if (Test-Path $sourcePath) {
-                Copy-Item -Path $sourcePath -Destination $targetDir -Force
-                Write-Host "Copied $dllFile to $targetDir"
-              } else {
-                Write-Host "DLL $dllFile not found in $sourceDir"
+      - uses: lukka/get-cmake@latest
+
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: show payload
+        run: |
+          echo "Client payload: ${{ toJson(github.event.client_payload) }}"
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name: Install dding on non-Windows
+        if: runner.os != 'Windows'
+        run: |
+          pip install dding
+          mkdir -p ~/.dding
+          dding_secret="${{ github.event.client_payload.dding_secret || env.DEFAULT_DDING_SECRET }}"
+          dding_token="${{ github.event.client_payload.dding_token || env.DEFAULT_DDING_TOKEN }}"
+          cat <<EOF > ~/.dding/config.json
+          [
+              {
+                  "group": "default",
+                  "secret": "$dding_secret",
+                  "token": "$dding_token"
               }
-            }
-            
-        - name: Setup SSH
-          uses: webfactory/ssh-agent@v0.5.3
-          with:
-            ssh-private-key: ${{ secrets.SSH_GITEE_PRIVATE_KEY }}
-        - name: Add Gitee to known hosts
-          run: |
-            ssh-keyscan gitee.com >> ~/.ssh/known_hosts
-            ssh-keyscan github.com >> ~/.ssh/known_hosts
+          ]
+          EOF
       
-        - uses: lukka/get-cmake@latest
-  
-        - uses: actions/checkout@v3
-          with:
-            submodules: recursive
-  
-        - name: show payload
-          run: |
-            echo "Client payload: ${{ toJson(github.event.client_payload) }}"
-  
-        - name: Set up Python
-          uses: actions/setup-python@v2
-          with:
-            python-version: '3.8'
-  
-        - name: Install dding on non-Windows
-          if: runner.os != 'Windows'
-          run: |
-            pip install dding
-            mkdir -p ~/.dding
-            dding_secret="${{ github.event.client_payload.dding_secret || env.DEFAULT_DDING_SECRET }}"
-            dding_token="${{ github.event.client_payload.dding_token || env.DEFAULT_DDING_TOKEN }}"
-            cat <<EOF > ~/.dding/config.json
-            [
-                {
-                    "group": "default",
-                    "secret": "$dding_secret",
-                    "token": "$dding_token"
-                }
-            ]
-            EOF
+      - name: Install dding on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          pip install dding
+          New-Item -Path $HOME\.dding -ItemType Directory -Force
+          $dding_secret = "${{ github.event.client_payload.dding_secret || env.DEFAULT_DDING_SECRET }}"
+          $dding_token = "${{ github.event.client_payload.dding_token || env.DEFAULT_DDING_TOKEN }}"
+          $config = @"
+          [
+              {
+                  "group": "default",
+                  "secret": "$dding_secret",
+                  "token": "$dding_token"
+              }
+          ]
+          "@
+          $config | Out-File -FilePath $HOME\.dding\config.json -Encoding utf8
+
+
+      # - name: Set up proxy
+      #   run: |
+      #     git config --global http.proxy socks5://python:psdemo982@123.60.164.114:11654
+
+
+      - name: Clone repository from Gitee with trace
+        shell: pwsh
+        run: |
+          # $env:GIT_TRACE = "1"
+          git clone https://oauth2:${{ secrets.MYUSER_TOKEN }}@${{ github.event.client_payload.gitaddress }}
         
-        - name: Install dding on Windows
-          if: runner.os == 'Windows'
-          shell: pwsh
-          run: |
-            pip install dding
-            New-Item -Path $HOME\.dding -ItemType Directory -Force
-            $dding_secret = "${{ github.event.client_payload.dding_secret || env.DEFAULT_DDING_SECRET }}"
-            $dding_token = "${{ github.event.client_payload.dding_token || env.DEFAULT_DDING_TOKEN }}"
-            $config = @"
-            [
-                {
-                    "group": "default",
-                    "secret": "$dding_secret",
-                    "token": "$dding_token"
-                }
-            ]
-            "@
-            $config | Out-File -FilePath $HOME\.dding\config.json -Encoding utf8
-  
-  
-        # - name: Set up proxy
-        #   run: |
-        #     git config --global http.proxy socks5://python:psdemo982@123.60.164.114:11654
-  
-  
-        - name: Clone repository from Gitee with trace
-          shell: pwsh
-          run: |
-            # $env:GIT_TRACE = "1"
-            git clone https://oauth2:${{ secrets.MYUSER_TOKEN }}@${{ github.event.client_payload.gitaddress }}
+          # git clone git@gitee.com:charlesabc/quick-print.git
+          # git clone https://oauth2:${{ secrets.GITEE_TOKEN }}@gitee.com/charlesabc/quick-print.git 
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+        
+      - name: CMake
+        shell: powershell
+        run: |
+          pwd
+          dir 
+          cd quick-print/build
+          cmake ../ -G "Visual Studio 16 2019" 
+
+          # run CMake (additional options like -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE are possible)
+          # it is recommended to specify the compiler version used for the build
+          # cmake -S . -B cbuild/ -DCRASHPAD_BUILD_EXAMPLES=TRUE -DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_C_COMPILER=cl.exe -DCMAKE_BUILD_TYPE=Release
+          # cmake --build cbuild/ --config Release -- /p:Configuration=Release
+
+      - name: Download External Lib
+        run: |
+          set PYTHONIOENCODING=utf-8
+          cd quick-print/tools/external_lib
+          pip install -r requirements.txt
+          python download.py --arch x64 --build_types dbg --mul
+          python download.py --arch x64 --build_types rel --mul
+
+
+      - name: Build with MSBuild
+        run: msbuild -m -t:Build -p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} quick-print/build/quick-print.sln
+
+
+      - name: Inno Package
+        shell: cmd
+        run: |
+          ls
+          cd quick-print\setup\exe
+          build.bat
+
+      - name: Check Status
+        if: ${{ success() }}
+        shell: pwsh
+        run: |
+          $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
+          Write-Host "Workflow succeeded for $repoName!"
+          dding "github action success :) for $repoName"
           
-            # git clone git@gitee.com:charlesabc/quick-print.git
-            # git clone https://oauth2:${{ secrets.GITEE_TOKEN }}@gitee.com/charlesabc/quick-print.git 
-  
-        - name: Setup MSBuild
-          uses: microsoft/setup-msbuild@v2
+
+      - name: Check Status
+        if: ${{ failure() }}
+        shell: pwsh
+        run: |
+          $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
+          Write-Host "Workflow failed for $repoName!"
+          dding "github action fail :( $repoName"
+
+      - name: Ls dir
+        run: |
+          echo "%cd%"
+          dir
+          cd quick-print
+          dir 
           
-        - name: CMake
-          shell: powershell
-          run: |
-            pwd
-            dir 
-            cd quick-print/build
-            cmake ../ -G "Visual Studio 16 2019" 
-  
-            # run CMake (additional options like -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE are possible)
-            # it is recommended to specify the compiler version used for the build
-            # cmake -S . -B cbuild/ -DCRASHPAD_BUILD_EXAMPLES=TRUE -DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_C_COMPILER=cl.exe -DCMAKE_BUILD_TYPE=Release
-            # cmake --build cbuild/ --config Release -- /p:Configuration=Release
-  
-        - name: Download External Lib
-          run: |
-            set PYTHONIOENCODING=utf-8
-            cd quick-print/tools/external_lib
-            pip install -r requirements.txt
-            python download.py --arch x64 --build_types dbg --mul
-            python download.py --arch x64 --build_types rel --mul
-  
-  
-        - name: Build with MSBuild
-          run: msbuild -m -t:Build -p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} quick-print/build/quick-print.sln
-  
-  
-        - name: Inno Package
-          shell: cmd
-          run: |
-            ls
-            cd quick-print\setup\exe
-            build.bat
-  
-        - name: Check Status
-          if: ${{ success() }}
-          shell: pwsh
-          run: |
-            $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
-            Write-Host "Workflow succeeded for $repoName!"
-            dding "github action success :) for $repoName"
-            
-  
-        - name: Check Status
-          if: ${{ failure() }}
-          shell: pwsh
-          run: |
-            $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
-            Write-Host "Workflow failed for $repoName!"
-            dding "github action fail :( $repoName"
-  
-        - name: Ls dir
-          run: |
-            echo "%cd%"
-            dir
-            cd quick-print
-            dir 
-            
-        - name: Archive binaries
-          uses: actions/upload-artifact@v4
-          with:
-            name: librel64
-            path: |
-              quick-print\librel64
-            retention-days: 1 # <= 这里可以设置保留天数
-  
-        - name: Archive binaries
-          uses: actions/upload-artifact@v4
-          with:
-            name: QuickPrintSetupArtifact
-            path: |
-              quick-print\setup\exe\Output\QuickPrintSetup.exe
-            retention-days: 1 # <= 这里可以设置保留天数
+      - name: Archive binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: librel64
+          path: |
+            quick-print\librel64
+          retention-days: 1 # <= 这里可以设置保留天数
+
+      - name: Archive binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuickPrintSetupArtifact
+          path: |
+            quick-print\setup\exe\Output\QuickPrintSetup.exe
+          retention-days: 1 # <= 这里可以设置保留天数
 
 
   create-release:
