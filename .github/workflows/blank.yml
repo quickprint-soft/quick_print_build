@@ -28,7 +28,7 @@ jobs:
             platform: 'x64'
             vsversion: 2019
     steps:
-      - name: Find CRT DLLs
+      - name: Check CRT DLLs in System32
         shell: pwsh
         run: |
           # DLL 文件列表
@@ -46,32 +46,13 @@ jobs:
             "api-ms-win-crt-locale-l1-1-0.dll"
           )
   
-          # 获取所有盘符
-          $drives = Get-PSDrive | Where-Object {$_.Provider -eq 'FileSystem'} | Select-Object -ExpandProperty Root
-  
-          # 创建目标目录
-          $targetDir = "$env:GITHUB_WORKSPACE\dlls"
-          New-Item -Path $targetDir -ItemType Directory -Force
-  
-          # 查找 DLL 文件
+          # 检查 DLL 文件是否存在于 C:\Windows\System32
           foreach ($dllFile in $dllFiles) {
-            $found = $false
-            foreach ($drive in $drives) {
-              Write-Host "Searching for $dllFile in $drive..."
-              try {
-                $dllPath = Get-ChildItem -Path $drive -Recurse -ErrorAction SilentlyContinue | Where-Object {$_.Name -eq $dllFile} | Select-Object -ExpandProperty FullName -ErrorAction SilentlyContinue
-                if ($dllPath) {
-                  Copy-Item -Path $dllPath -Destination $targetDir -Force
-                  Write-Host "DLL $dllFile found and copied to $targetDir"
-                  $found = $true
-                  break
-                }
-              } catch {
-                Write-Host "Error accessing $drive: $($_.Exception.Message)"
-              }
-            }
-            if (-not $found) {
-              Write-Host "DLL $dllFile not found on any drive."
+            $dllPath = Join-Path -Path "C:\Windows\System32" -ChildPath $dllFile
+            if (Test-Path -Path $dllPath) {
+              Write-Host "DLL $dllFile found in C:\Windows\System32"
+            } else {
+              Write-Host "DLL $dllFile not found in C:\Windows\System32"
             }
           }
           # - name: Install Visual C++ Redistributable
