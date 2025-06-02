@@ -29,39 +29,47 @@ jobs:
             vsversion: 2019
     steps:
 
-      - name: Set up PowerShell environment
-        shell: pwsh
-        run: |
-          # PowerShell script to find DLL
-          $drives = Get-PSDrive | Where-Object {$_.Provider -eq 'FileSystem'} | Select-Object -ExpandProperty Root
-          $dllFileName = "api-ms-win-crt-runtime-l1-1-0.dll"
-          $dllFound = $false
-  
-          foreach ($drive in $drives) {
-              Write-Host "Searching in $drive..."
-              try {
-                  $dllPath = Get-ChildItem -Path $drive -Recurse -ErrorAction SilentlyContinue | Where-Object {$_.Name -eq $dllFileName} | Select-Object -ExpandProperty FullName -ErrorAction SilentlyContinue
-                  if ($dllPath) {
-                      Write-Host "DLL found at $dllPath"
-                      $dllFound = $true
-                      # Optionally copy the file to a specific location
-                      Copy-Item -Path $dllPath -Destination "$env:GITHUB_WORKSPACE\dlls" -ErrorAction SilentlyContinue
-                      break
-                  } else {
-                      Write-Host "DLL not found in $drive"
-                  }
-              } catch {
-                  Write-Host "Error accessing $drive: $_"
-              }
-          }
-  
-          if (-not $dllFound) {
-              Write-Host "DLL not found on any drive."
-              # Optionally install Visual C++ Redistributable if DLL not found
+          - name: Install Visual C++ Redistributable
+            shell: pwsh
+            run: |
+              # 下载并安装 Visual C++ Redistributable
               $vcRedistUrl = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
               Invoke-WebRequest -Uri $vcRedistUrl -OutFile vc_redist.x64.exe
               Start-Process -FilePath vc_redist.x64.exe -ArgumentList "/install", "/quiet", "/norestart" -Wait
-          }
+      
+          - name: Copy CRT DLLs
+            shell: pwsh
+            run: |
+              # DLL 文件列表
+              $dllFiles = @(
+                "api-ms-win-crt-runtime-l1-1-0.dll",
+                "api-ms-win-crt-heap-l1-1-0.dll",
+                "api-ms-win-crt-math-l1-1-0.dll",
+                "api-ms-win-crt-string-l1-1-0.dll",
+                "api-ms-win-crt-stdio-l1-1-0.dll",
+                "api-ms-win-crt-filesystem-l1-1-0.dll",
+                "api-ms-win-crt-time-l1-1-0.dll",
+                "api-ms-win-crt-convert-l1-1-0.dll",
+                "api-ms-win-crt-utility-l1-1-0.dll",
+                "api-ms-win-crt-environment-l1-1-0.dll",
+                "api-ms-win-crt-locale-l1-1-0.dll"
+              )
+      
+              # 创建目标目录
+              $targetDir = "$env:GITHUB_WORKSPACE\dlls"
+              New-Item -Path $targetDir -ItemType Directory -Force
+      
+              # 从 System32 目录复制 DLL 文件
+              $sourceDir = "C:\Windows\System32"
+              foreach ($dllFile in $dllFiles) {
+                $sourcePath = Join-Path -Path $sourceDir -ChildPath $dllFile
+                if (Test-Path $sourcePath) {
+                  Copy-Item -Path $sourcePath -Destination $targetDir -Force
+                  Write-Host "Copied $dllFile to $targetDir"
+                } else {
+                  Write-Host "DLL $dllFile not found in $sourceDir"
+                }
+              }
       # - name: Setup SSH
       #   uses: webfactory/ssh-agent@v0.5.3
       #   with:
