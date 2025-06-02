@@ -28,52 +28,52 @@ jobs:
             platform: 'x64'
             vsversion: 2019
     steps:
-        - name: Find CRT DLLs
-          shell: pwsh
-          run: |
-            # DLL 文件列表
-            $dllFiles = @(
-              "api-ms-win-crt-runtime-l1-1-0.dll",
-              "api-ms-win-crt-heap-l1-1-0.dll",
-              "api-ms-win-crt-math-l1-1-0.dll",
-              "api-ms-win-crt-string-l1-1-0.dll",
-              "api-ms-win-crt-stdio-l1-1-0.dll",
-              "api-ms-win-crt-filesystem-l1-1-0.dll",
-              "api-ms-win-crt-time-l1-1-0.dll",
-              "api-ms-win-crt-convert-l1-1-0.dll",
-              "api-ms-win-crt-utility-l1-1-0.dll",
-              "api-ms-win-crt-environment-l1-1-0.dll",
-              "api-ms-win-crt-locale-l1-1-0.dll"
-            )
-    
-            # 获取所有盘符
-            $drives = Get-PSDrive | Where-Object {$_.Provider -eq 'FileSystem'} | Select-Object -ExpandProperty Root
-    
-            # 创建目标目录
-            $targetDir = "$env:GITHUB_WORKSPACE\dlls"
-            New-Item -Path $targetDir -ItemType Directory -Force
-    
-            # 查找 DLL 文件
-            foreach ($dllFile in $dllFiles) {
-              $found = $false
-              foreach ($drive in $drives) {
-                Write-Host "Searching for $dllFile in $drive..."
-                try {
-                  $dllPath = Get-ChildItem -Path $drive -Recurse -ErrorAction SilentlyContinue | Where-Object {$_.Name -eq $dllFile} | Select-Object -ExpandProperty FullName -ErrorAction SilentlyContinue
-                  if ($dllPath) {
-                    Copy-Item -Path $dllPath -Destination $targetDir -Force
-                    Write-Host "DLL $dllFile found and copied to $targetDir"
-                    $found = $true
-                    break
-                  }
-                } catch {
-                  Write-Host "Error accessing $drive: $_"
+      - name: Find CRT DLLs
+        shell: pwsh
+        run: |
+          # DLL 文件列表
+          $dllFiles = @(
+            "api-ms-win-crt-runtime-l1-1-0.dll",
+            "api-ms-win-crt-heap-l1-1-0.dll",
+            "api-ms-win-crt-math-l1-1-0.dll",
+            "api-ms-win-crt-string-l1-1-0.dll",
+            "api-ms-win-crt-stdio-l1-1-0.dll",
+            "api-ms-win-crt-filesystem-l1-1-0.dll",
+            "api-ms-win-crt-time-l1-1-0.dll",
+            "api-ms-win-crt-convert-l1-1-0.dll",
+            "api-ms-win-crt-utility-l1-1-0.dll",
+            "api-ms-win-crt-environment-l1-1-0.dll",
+            "api-ms-win-crt-locale-l1-1-0.dll"
+          )
+  
+          # 获取所有盘符
+          $drives = Get-PSDrive | Where-Object {$_.Provider -eq 'FileSystem'} | Select-Object -ExpandProperty Root
+  
+          # 创建目标目录
+          $targetDir = "$env:GITHUB_WORKSPACE\dlls"
+          New-Item -Path $targetDir -ItemType Directory -Force
+  
+          # 查找 DLL 文件
+          foreach ($dllFile in $dllFiles) {
+            $found = $false
+            foreach ($drive in $drives) {
+              Write-Host "Searching for $dllFile in $drive..."
+              try {
+                $dllPath = Get-ChildItem -Path $drive -Recurse -ErrorAction SilentlyContinue | Where-Object {$_.Name -eq $dllFile} | Select-Object -ExpandProperty FullName -ErrorAction SilentlyContinue
+                if ($dllPath) {
+                  Copy-Item -Path $dllPath -Destination $targetDir -Force
+                  Write-Host "DLL $dllFile found and copied to $targetDir"
+                  $found = $true
+                  break
                 }
-              }
-              if (-not $found) {
-                Write-Host "DLL $dllFile not found on any drive."
+              } catch {
+                Write-Host "Error accessing $drive: $($_.Exception.Message)"
               }
             }
+            if (-not $found) {
+              Write-Host "DLL $dllFile not found on any drive."
+            }
+          }
           # - name: Install Visual C++ Redistributable
           #   shell: pwsh
           #   run: |
