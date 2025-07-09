@@ -115,7 +115,7 @@ jobs:
           pwd
           dir 
           cd quick-print/build
-          cmake ../ -G "Visual Studio 16 2019" 
+          cmake ../ -G "Visual Studio 17 2022" 
 
           # run CMake (additional options like -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE are possible)
           # it is recommended to specify the compiler version used for the build
