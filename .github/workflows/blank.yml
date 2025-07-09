@@ -28,7 +28,7 @@ jobs:
         include:
           - configuration: 'Release'
             platform: 'x64'
-            vsversion: 2019
+            vsversion: 2022
     steps:
 
       # - name: Setup SSH
