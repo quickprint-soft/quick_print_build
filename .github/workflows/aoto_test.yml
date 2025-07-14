@@ -112,7 +112,7 @@ jobs:
           cd quick-print/officeConvert
           mkdir build
           cd build
-          cmake .. -G "Visual Studio 16 2019" -A x64 -DBUILD_OFFICE_CONVERT_LIB=ON -DBUILD_OFFICE_CONV_TOOL=ON  -DBUILD_TESTS=ON
+          cmake .. -G "Visual Studio 17 2022" -A x64 -DBUILD_OFFICE_CONVERT_LIB=ON -DBUILD_OFFICE_CONV_TOOL=ON  -DBUILD_TESTS=ON
           msbuild quick-print/officeConvert/build/officeConvert.sln /p:Configuration=Release /p:Platform=x64
           cd quick-print/librel
           dir
