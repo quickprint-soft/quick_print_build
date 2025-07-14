@@ -86,7 +86,7 @@ jobs:
       - name: Clone repository from Gitee with trace
         shell: pwsh
         run: |
-          git clone https://oauth2:${{ secrets.MYUSER_TOKEN }}@${{ github.event.client_payload.gitaddress }}
+          git clone https://oauth2:${{ secrets.MYUSER_TOKEN }}@github.com:quickprint-soft/quick-print.git
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
