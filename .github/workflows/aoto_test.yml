@@ -1,0 +1,168 @@
+name: CI
+
+on:
+  repository_dispatch:
+    types:
+      - quick_print_test
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Runs the workflow once a day at midnight UTC
+    - cron: '0 */12 * * *'
+
+env:
+  DEFAULT_DDING_SECRET: 'SECbe4003c4d14c740788cf9383fa1d8d77c029a03e6df99dde528274b9bcc17926'
+  DEFAULT_DDING_TOKEN: 'fd87df4f83611b4c4cf31d5ad48f890f9603b57b1cac3d52fb80df8b86a5b629'
+
+concurrency:
+  group: build-latest
+  cancel-in-progress: true
+
+jobs:
+  msw-msvs:
+    runs-on: windows-${{ matrix.vsversion }}
+    name: wxMSW vs${{ matrix.vsversion }} ${{ matrix.configuration }} ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - configuration: 'Release'
+            platform: 'x64'
+            vsversion: 2022
+    steps:
+      - uses: lukka/get-cmake@latest
+
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: show payload
+        run: |
+          echo "Client payload: ${{ toJson(github.event.client_payload) }}"
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name: Install dding on non-Windows
+        if: runner.os != 'Windows'
+        run: |
+          pip install dding
+          mkdir -p ~/.dding
+          dding_secret="${{ github.event.client_payload.dding_secret || env.DEFAULT_DDING_SECRET }}"
+          dding_token="${{ github.event.client_payload.dding_token || env.DEFAULT_DDING_TOKEN }}"
+          cat <<EOF > ~/.dding/config.json
+          [
+              {
+                  "group": "default",
+                  "secret": "$dding_secret",
+                  "token": "$dding_token"
+              }
+          ]
+          EOF
+
+      - name: Install dding on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          pip install dding
+          New-Item -Path $HOME\.dding -ItemType Directory -Force
+          $dding_secret = "${{ github.event.client_payload.dding_secret || env.DEFAULT_DDING_SECRET }}"
+          $dding_token = "${{ github.event.client_payload.dding_token || env.DEFAULT_DDING_TOKEN }}"
+          $config = @"
+          [
+              {
+                  "group": "default",
+                  "secret": "$dding_secret",
+                  "token": "$dding_token"
+              }
+          ]
+          "@
+          $config | Out-File -FilePath $HOME\.dding\config.json -Encoding utf8
+
+      - name: Clone repository from Gitee with trace
+        shell: pwsh
+        run: |
+          git clone https://oauth2:${{ secrets.MYUSER_TOKEN }}@${{ github.event.client_payload.gitaddress }}
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: CMake
+        shell: powershell
+        run: |
+          pwd
+          dir 
+          cd quick-print/build
+          cmake ../ -G "Visual Studio 17 2022"
+
+      - name: Download External Lib
+        run: |
+          set PYTHONIOENCODING=utf-8
+          cd quick-print/tools/external_lib
+          pip install -r requirements.txt
+          python download.py --arch x64 --build_types dbg --mul
+          python download.py --arch x64 --build_types rel --mul
+
+      - name: Build with MSBuild
+        run: |
+          cd quick-print/officeConvert
+          mkdir build
+          cd build
+          cmake .. -G "Visual Studio 16 2019" -A x64 -DBUILD_OFFICE_CONVERT_LIB=ON -DBUILD_OFFICE_CONV_TOOL=ON  -DBUILD_TESTS=ON
+          msbuild quick-print/officeConvert/build/officeConvert.sln /p:Configuration=Release /p:Platform=x64
+          cd quick-print/librel
+          dir
+          
+          
+          
+        
+
+      # - name: Inno Package
+      #   shell: cmd
+      #   run: |
+      #     ls
+      #     cd quick-print\setup\exe
+      #     build.bat
+
+      - name: Check Status
+        if: ${{ success() }}
+        shell: pwsh
+        run: |
+          $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
+          Write-Host "Workflow succeeded for $repoName!"
+          dding "github action auto test success :) for $repoName"
+
+      - name: Check Status
+        if: ${{ failure() }}
+        shell: pwsh
+        run: |
+          $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
+          Write-Host "Workflow failed for $repoName!"
+          dding "github action auto test fail :( $repoName"
+
+      # - name: Ls dir
+      #   run: |
+      #     echo "%cd%"
+      #     dir
+      #     cd quick-print
+      #     dir 
+
+      # - name: Archive binaries
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: librel64
+      #     path: |
+      #       quick-print\librel64
+      #     retention-days: 1
+
+      # - name: Archive binaries
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: QuickPrintSetupArtifact
+      #     path: |
+      #       quick-print\setup\exe\Output\QuickPrintSetup.exe
+      #     retention-days: 1
