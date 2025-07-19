@@ -130,6 +130,16 @@ jobs:
           python download.py --arch x64 --build_types dbg --mul
           python download.py --arch x64 --build_types rel --mul
 
+      - name: Build WebView
+        run: |
+          pwd
+          dir 
+          cd quick-print/WebView
+          build_local.bat
+          cd build
+          cmake --build .
+
+
 
       - name: Build with MSBuild
         run: msbuild -m -t:Build -p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} quick-print/build/quick-print.sln
