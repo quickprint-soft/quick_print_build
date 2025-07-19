@@ -135,8 +135,9 @@ jobs:
           pwd
           dir 
           cd quick-print/WebView
-          build_local.bat
+          mkdir build
           cd build
+          cmake ../ -DBUILD_WXWIDGETS_EXAMPLES=ON -DBUILD_WEBVIEW_EXAMPLES=ON -DBUILD_ADVANCED_WXWIDGETS_EXAMPLE=ON
           cmake --build .
 
 
