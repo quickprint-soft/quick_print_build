@@ -140,6 +140,15 @@ jobs:
           cmake ../ -DBUILD_WXWIDGETS_EXAMPLES=ON -DBUILD_WEBVIEW_EXAMPLES=ON -DBUILD_ADVANCED_WXWIDGETS_EXAMPLE=ON
           cmake --build .
 
+      - name: Build Office
+        run: |
+          pwd 
+          dir 
+          cd quick-print/officeConvert
+          mkdir build
+          cd build
+          cmake ../ BUILD_OFFICE_CONVERT_LIB=ON -DBUILD_TESTS=ON -DENABLE_GTEST=ON BUILD_OFFICE_CONVERT_DLL=ON BUILD_OFFICE_CONV_TOOL=ON BUILD_GUI_ASYNC_EXAMPLE=ON
+          cmake --build .
 
 
       - name: Build with MSBuild
