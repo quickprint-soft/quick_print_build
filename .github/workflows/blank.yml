@@ -20,7 +20,7 @@ concurrency:
   
 jobs:
   msw-msvs:
-    runs-on: windows-${{ matrix.vsversion }}
+    runs-on: windows-${{ matrix.platform}}-${{ matrix.vsversion }}
     name: wxMSW vs${{ matrix.vsversion }} ${{ matrix.configuration }} ${{ matrix.platform }}
     strategy:
       fail-fast: false
@@ -28,6 +28,9 @@ jobs:
         include:
           - configuration: 'Release'
             platform: 'x64'
+            vsversion: 2022
+          - configuration: 'Release'
+            platform: 'x86'
             vsversion: 2022
     steps:
 
@@ -115,43 +118,75 @@ jobs:
           pwd
           dir 
           cd quick-print/build
-          cmake ../ -G "Visual Studio 17 2022" 
+          # 根据平台选择生成器
+          if (${{ matrix.platform }} -eq 'x64') {
+            cmake .. -G "Visual Studio 17 2022" -A x64
+          } elseif (${{ matrix.platform }} -eq 'Win32') {
+            cmake .. -G "Visual Studio 17 2022" -A Win32
+          } else {
+            Write-Error "Unsupported platform: ${{ matrix.platform }}"
+          }
+          
+          # cmake ../ -G "Visual Studio 17 2022" 
 
           # run CMake (additional options like -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE are possible)
           # it is recommended to specify the compiler version used for the build
           # cmake -S . -B cbuild/ -DCRASHPAD_BUILD_EXAMPLES=TRUE -DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_C_COMPILER=cl.exe -DCMAKE_BUILD_TYPE=Release
           # cmake --build cbuild/ --config Release -- /p:Configuration=Release
 
-      - name: Download External Lib
+      - name: Download External Lib-${{ matrix.platform}}-${{ matrix.vsversion }}
         run: |
           set PYTHONIOENCODING=utf-8
           cd quick-print/tools/external_lib
           pip install -r requirements.txt
-          python download.py --arch x64 --build_types dbg --mul
-          python download.py --arch x64 --build_types rel --mul
+          if [ "${{ matrix.platform }}" == "x64" ]; then
+            python download.py --arch x64 --build_types dbg --mul
+            python download.py --arch x64 --build_types rel --mul
+          elif [ "${{ matrix.platform }}" == "x86" ]; then
+            python download.py --arch win32 --build_types dbg --mul
+            python download.py --arch win32 --build_types rel --mul
+          fi
 
-      - name: Build WebView
+          
+      - name: Build WebView-${{ matrix.platform}}-${{ matrix.vsversion }}
         run: |
           pwd
           dir 
           cd quick-print/WebView
           mkdir build
           cd build
-          cmake ../ -DBUILD_WXWIDGETS_EXAMPLES=ON -DBUILD_WEBVIEW_EXAMPLES=ON -DBUILD_ADVANCED_WXWIDGETS_EXAMPLE=ON
+          if [ "${{ matrix.platform }}" == "x64" ]; then
+            echo "正在为 x64 架构构建 WebView"
+            cmake ../ -G "Visual Studio 17 2022" -A x64 -DBUILD_WXWIDGETS_EXAMPLES=ON -DBUILD_WEBVIEW_EXAMPLES=ON -DBUILD_ADVANCED_WXWIDGETS_EXAMPLE=ON
+          elif [ "${{ matrix.platform }}" == "x86" ]; then
+            echo "正在为 x86 架构构建 WebView"
+            cmake ../ -G "Visual Studio 17 2022" -A Win32 -DBUILD_WXWIDGETS_EXAMPLES=ON -DBUILD_WEBVIEW_EXAMPLES=ON -DBUILD_ADVANCED_WXWIDGETS_EXAMPLE=ON
+          fi
           cmake --build .
+          # cmake ../ -DBUILD_WXWIDGETS_EXAMPLES=ON -DBUILD_WEBVIEW_EXAMPLES=ON -DBUILD_ADVANCED_WXWIDGETS_EXAMPLE=ON
+          # cmake --build .
 
-      - name: Build Office
-        run: |
-          pwd 
-          dir 
-          cd quick-print/officeConvert
-          mkdir build
-          cd build
-          cmake ../ BUILD_OFFICE_CONVERT_LIB=ON -DBUILD_TESTS=ON -DENABLE_GTEST=ON BUILD_OFFICE_CONVERT_DLL=ON BUILD_OFFICE_CONV_TOOL=ON BUILD_GUI_ASYNC_EXAMPLE=ON
-          cmake --build .
+      # - name: Build Office-${{ matrix.platform}}-${{ matrix.vsversion }}
+      #   run: |
+      #     pwd 
+      #     dir 
+      #     cd quick-print/officeConvert
+      #     mkdir build
+      #     cd build
+
+      #     if [ "${{ matrix.platform }}" == "x64" ]; then
+      #       echo "正在为 x64 架构构建 Office"
+      #       cmake ../ -G "Visual Studio 17 2022" -A x64 -DBUILD_OFFICE_CONVERT_LIB=ON -DBUILD_TESTS=ON -DENABLE_GTEST=ON -DBUILD_OFFICE_CONVERT_DLL=ON -DBUILD_OFFICE_CONV_TOOL=ON -DBUILD_GUI_ASYNC_EXAMPLE=ON
+      #     elif [ "${{ matrix.platform }}" == "x86" ]; then
+      #       echo "正在为 x86 架构构建 Office"
+      #       cmake ../ -G "Visual Studio 17 2022" -A Win32 -DBUILD_OFFICE_CONVERT_LIB=ON -DBUILD_TESTS=ON -DENABLE_GTEST=ON -DBUILD_OFFICE_CONVERT_DLL=ON -DBUILD_OFFICE_CONV_TOOL=ON -DBUILD_GUI_ASYNC_EXAMPLE=ON
+      #     fi
+      #     cmake --build .
+      #     # cmake ../ BUILD_OFFICE_CONVERT_LIB=ON -DBUILD_TESTS=ON -DENABLE_GTEST=ON BUILD_OFFICE_CONVERT_DLL=ON BUILD_OFFICE_CONV_TOOL=ON BUILD_GUI_ASYNC_EXAMPLE=ON
+      #     # cmake --build .
 
 
-      - name: Build with MSBuild
+      - name: Build with MSBuild-${{ matrix.platform}}-${{ matrix.vsversion }}
         run: msbuild -m -t:Build -p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} quick-print/build/quick-print.sln
 
 
