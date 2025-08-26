@@ -278,13 +278,15 @@ jobs:
       - name: Send dingding notify error
         uses: zcong1993/actions-ding@master
         with:
-          dingToken: ${{ github.event.client_payload.dding_token.token }} | DEFAULT_DDING_TOKEN #钉钉token
-          secret: ${{ github.event.client_payload.dding_token.secret }} | DEFAULT_DDING_SECRET
+          # dingToken: ${{ github.event.client_payload.dding_token.token }} | DEFAULT_DDING_TOKEN #钉钉token
+          # secret: ${{ github.event.client_payload.dding_token.secret }} | DEFAULT_DDING_SECRET
+          dingToken: DEFAULT_DDING_TOKEN #钉钉token
+          secret:  DEFAULT_DDING_SECRET
           body: |
             {
               "msgtype": "text",
               "text": {
-                  "content": 'status:[打叉][打叉][打叉]  quick_print 执行失败\n提交者:  test\n${{ github.ref_type }}: ${{ github.event.client_payload.mybranch }}\nlog: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+                  "content": 'status:[打叉][打叉][打叉]  quick_print 执行失败\n提交者:  test\n${{ github.ref_type }}: master\nlog: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
              }
              }
             
@@ -297,13 +299,15 @@ jobs:
       - name: Send dingding notify success
         uses: zcong1993/actions-ding@master
         with:
-          dingToken: ${{ github.event.client_payload.dding_token.token }} | DEFAULT_DDING_TOKEN #钉钉token
-          secret: ${{ github.event.client_payload.dding_token.secret }} | DEFAULT_DDING_SECRET
+          # dingToken: ${{ github.event.client_payload.dding_token.token }} | DEFAULT_DDING_TOKEN #钉钉token
+          # secret: ${{ github.event.client_payload.dding_token.secret }} | DEFAULT_DDING_SECRET
+          dingToken: DEFAULT_DDING_TOKEN #钉钉token
+          secret:  DEFAULT_DDING_SECRET
           body: |
             {
              "msgtype": "text",
              "text": {
-                 "content": 'status:[对勾][对勾][对勾][100分]  quick_print 执行成功\n提交者: test\n${{ github.ref_type }}: ${{ github.event.client_payload.mybranch }}\nlog: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+                 "content": 'status:[对勾][对勾][对勾][100分]  quick_print 执行成功\n提交者: test\n${{ github.ref_type }}: master\nlog: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
              }
              }
   
