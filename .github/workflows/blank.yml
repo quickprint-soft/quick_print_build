@@ -278,10 +278,8 @@ jobs:
       - name: Send dingding notify error
         uses: zcong1993/actions-ding@master
         with:
-          # dingToken: ${{ github.event.client_payload.dding_token.token }} | DEFAULT_DDING_TOKEN #钉钉token
-          # secret: ${{ github.event.client_payload.dding_token.secret }} | DEFAULT_DDING_SECRET
-          dingToken: DEFAULT_DDING_TOKEN #钉钉token
-          secret:  DEFAULT_DDING_SECRET
+          dingToken: ${{ github.event.client_payload.dding_token.token }} | DEFAULT_DDING_TOKEN #钉钉token
+          secret: ${{ github.event.client_payload.dding_token.secret }} | DEFAULT_DDING_SECRET
           body: |
             {
               "msgtype": "text",
@@ -299,10 +297,8 @@ jobs:
       - name: Send dingding notify success
         uses: zcong1993/actions-ding@master
         with:
-          # dingToken: ${{ github.event.client_payload.dding_token.token }} | DEFAULT_DDING_TOKEN #钉钉token
-          # secret: ${{ github.event.client_payload.dding_token.secret }} | DEFAULT_DDING_SECRET
-          dingToken: DEFAULT_DDING_TOKEN #钉钉token
-          secret:  DEFAULT_DDING_SECRET
+          dingToken: ${{ github.event.client_payload.dding_token.token }} | DEFAULT_DDING_TOKEN #钉钉token
+          secret: ${{ github.event.client_payload.dding_token.secret }} | DEFAULT_DDING_SECRET
           body: |
             {
              "msgtype": "text",
