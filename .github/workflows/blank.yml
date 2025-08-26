@@ -164,22 +164,22 @@ jobs:
           cd quick-print\setup\exe
           build.bat
 
-      # - name: Check Status
-      #   if: ${{ success() }}
-      #   shell: pwsh
-      #   run: |
-      #     $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
-      #     Write-Host "Workflow succeeded for $repoName!"
-      #     dding "github action success :) for $repoName"
+      - name: Check Status
+        if: ${{ success() }}
+        shell: pwsh
+        run: |
+          $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
+          Write-Host "Workflow succeeded for $repoName!"
+          dding "github action success :) for $repoName"
           
 
-      # - name: Check Status
-      #   if: ${{ failure() }}
-      #   shell: pwsh
-      #   run: |
-      #     $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
-      #     Write-Host "Workflow failed for $repoName!"
-      #     dding "github action fail :( $repoName"
+      - name: Check Status
+        if: ${{ failure() }}
+        shell: pwsh
+        run: |
+          $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
+          Write-Host "Workflow failed for $repoName!"
+          dding "github action fail :( $repoName"
 
       - name: Ls dir
         run: |
