@@ -238,7 +238,12 @@ jobs:
         run: |
           ls ./artifacts
           cd ./artifacts
+          rm -fr librel64/static
+          rm -fr librel64/dll
+          
           mv librel64 QuickPrintAll
+          
+          
           zip -r QuickPrintAll.zip QuickPrintAll
           
           
