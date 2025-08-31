@@ -4,9 +4,9 @@ on:
     types:
       - quick_print
   push:
-    branches: [ * ]
+    branches: [ master ]
   pull_request:
-    branches: [ * ]  
+    branches: [ master ]  
 env:
 # game
   # DEFAULT_DDING_SECRET: 'SEC618a0dffd91ebf7db4c9c00e2a82b863bc6181858cadbdbf1655ca6dcd2fd1cc'
