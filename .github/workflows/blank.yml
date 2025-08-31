@@ -4,9 +4,9 @@ on:
     types:
       - quick_print
   push:
-    branches: [ main ]
+    branches: [ * ]
   pull_request:
-    branches: [ main ]  
+    branches: [ * ]  
 env:
 # game
   # DEFAULT_DDING_SECRET: 'SEC618a0dffd91ebf7db4c9c00e2a82b863bc6181858cadbdbf1655ca6dcd2fd1cc'
@@ -102,6 +102,7 @@ jobs:
         run: |
           # $env:GIT_TRACE = "1"
           git clone https://oauth2:${{ secrets.MYUSER_TOKEN }}@${{ github.event.client_payload.gitaddress }}
+
         
           # git clone git@gitee.com:charlesabc/quick-print.git
           # git clone https://oauth2:${{ secrets.GITEE_TOKEN }}@gitee.com/charlesabc/quick-print.git 
@@ -166,12 +167,21 @@ jobs:
           
           build_update.bat
 
+      - name: Inno update Package
+        shell: cmd
+        run: |
+          ls
+          cd quick-print\setup\exe
+          build_update.bat
+
+
       - name: cp update to download server 
         shell: bash 
         run: |
           echo " copy to download server"
           ls
           cd quick-print/setup/exe 
+          ls quick-print/setup/exe/Output
           bash copy.sh
 
       - name: Check Status
