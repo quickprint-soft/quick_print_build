@@ -181,7 +181,7 @@ jobs:
           echo " copy to download server"
           ls
           cd quick-print/setup/exe 
-          ls quick-print/setup/exe/Output
+          ls Output
           bash copy.sh
 
       - name: Check Status
