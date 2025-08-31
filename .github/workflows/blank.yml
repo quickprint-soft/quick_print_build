@@ -163,6 +163,16 @@ jobs:
           ls
           cd quick-print\setup\exe
           build.bat
+          
+          build_update.bat
+
+      - name: cp update to download server 
+        shell: bash 
+        run: |
+          echo " copy to download server"
+          ls
+          cd quick-print/setup/exe 
+          bash copy.sh
 
       - name: Check Status
         if: ${{ success() }}
@@ -202,6 +212,14 @@ jobs:
           name: QuickPrintSetupArtifact
           path: |
             quick-print\setup\exe\Output\QuickPrintSetup.exe
+          retention-days: 1 # <= 这里可以设置保留天数
+
+      - name: Archive binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuickPrintSetupArtifact
+          path: |
+            quick-print\setup\exe\Output\QuickPrintUpdateSetup.exe
           retention-days: 1 # <= 这里可以设置保留天数
 
 
