@@ -31,14 +31,14 @@ jobs:
             vsversion: 2022
     steps:
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_GITEE_PRIVATE_KEY }}
-      - name: Add Gitee to known hosts
-        run: |
-          ssh-keyscan gitee.com >> ~/.ssh/known_hosts
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
+      # - name: Setup SSH
+      #   uses: webfactory/ssh-agent@v0.5.3
+      #   with:
+      #     ssh-private-key: ${{ secrets.SSH_GITEE_PRIVATE_KEY }}
+      # - name: Add Gitee to known hosts
+      #   run: |
+      #     ssh-keyscan gitee.com >> ~/.ssh/known_hosts
+      #     ssh-keyscan github.com >> ~/.ssh/known_hosts
     
       - uses: lukka/get-cmake@latest
 
@@ -182,7 +182,7 @@ jobs:
           ls
           cd quick-print/setup/exe 
           ls Output
-          bash copy.sh
+          # bash copy.sh
 
       - name: Check Status
         if: ${{ success() }}
