@@ -296,6 +296,7 @@ jobs:
           cd ./artifacts
           gh release upload $RELEASE_DATE ./*.zip
           gh release upload $RELEASE_DATE ./QuickPrintSetupArtifact/*.exe
+          gh release upload $RELEASE_DATE ./QuickPrintSetupArtifact/update.xml
           gh release upload $RELEASE_DATE filelist.txt
           
       - name: LS Artifacts
