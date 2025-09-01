@@ -182,7 +182,7 @@ jobs:
           ls
           cd quick-print/setup/exe 
           ls Output
-          bash copy.sh
+          # bash copy.sh
 
       - name: Check Status
         if: ${{ success() }}
