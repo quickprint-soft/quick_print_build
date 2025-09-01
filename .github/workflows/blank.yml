@@ -223,7 +223,7 @@ jobs:
           path: |
             quick-print\setup\exe\Output\QuickPrintSetup.exe
             quick-print\setup\exe\Output\QuickPrintUpdateSetup.exe
-            quick-print\setup\exe\Output\update.xml
+            quick-print\setup\exe\update.xml
           retention-days: 1 # <= 这里可以设置保留天数
 
       # - name: Archive binaries
