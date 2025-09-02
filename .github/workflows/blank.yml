@@ -224,6 +224,13 @@ jobs:
           path: |
             quick-print\setup\exe\Output\QuickPrintSetup.exe
             quick-print\setup\exe\Output\QuickPrintUpdateSetup.exe
+          retention-days: 1 # <= 这里可以设置保留天数
+
+      - name: Archive binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: update.xml
+          path: |
             quick-print\setup\exe\update.xml
           retention-days: 1 # <= 这里可以设置保留天数
 
@@ -299,7 +306,7 @@ jobs:
           gh release upload $RELEASE_DATE ./*.zip
           gh release upload $RELEASE_DATE ./QuickPrintSetupArtifact/QuickPrintUpdateSetup.exe
           gh release upload $RELEASE_DATE ./QuickPrintSetupArtifact/QuickPrintSetup.exe
-          gh release upload $RELEASE_DATE ./QuickPrintSetupArtifact/update.xml
+          gh release upload $RELEASE_DATE ./update.xml
           gh release upload $RELEASE_DATE filelist.txt
           
       - name: LS Artifacts
