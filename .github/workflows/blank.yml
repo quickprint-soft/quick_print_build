@@ -294,8 +294,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd ./artifacts
+          ls
           gh release upload $RELEASE_DATE ./*.zip
-          gh release upload $RELEASE_DATE ./QuickPrintSetupArtifact/*.exe
+          gh release upload $RELEASE_DATE ./QuickPrintSetupArtifact/QuickPrintUpdateSetup.exe
+          gh release upload $RELEASE_DATE ./QuickPrintSetupArtifact/QuickPrintSetup.exe
           gh release upload $RELEASE_DATE ./QuickPrintSetupArtifact/update.xml
           gh release upload $RELEASE_DATE filelist.txt
           
