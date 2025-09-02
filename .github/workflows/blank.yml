@@ -31,14 +31,14 @@ jobs:
             vsversion: 2022
     steps:
 
-      # - name: Setup SSH
-      #   uses: webfactory/ssh-agent@v0.5.3
-      #   with:
-      #     ssh-private-key: ${{ secrets.SSH_GITEE_PRIVATE_KEY }}
-      # - name: Add Gitee to known hosts
-      #   run: |
-      #     ssh-keyscan gitee.com >> ~/.ssh/known_hosts
-      #     ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_GITEE_PRIVATE_KEY }}
+      - name: Add Gitee to known hosts
+        run: |
+          ssh-keyscan gitee.com >> ~/.ssh/known_hosts
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
     
       - uses: lukka/get-cmake@latest
 
@@ -182,7 +182,7 @@ jobs:
           ls
           cd quick-print/setup/exe 
           ls Output
-          # bash copy.sh
+          bash copy.sh
 
       - name: Check Status
         if: ${{ success() }}
@@ -207,7 +207,6 @@ jobs:
           dir
           cd quick-print
           dir 
-          dir setup/exe/Output
           
       - name: Archive binaries
         uses: actions/upload-artifact@v4
@@ -223,24 +222,15 @@ jobs:
           name: QuickPrintSetupArtifact
           path: |
             quick-print\setup\exe\Output\QuickPrintSetup.exe
-            quick-print\setup\exe\Output\QuickPrintUpdateSetup.exe
           retention-days: 1 # <= 这里可以设置保留天数
 
       - name: Archive binaries
         uses: actions/upload-artifact@v4
         with:
-          name: update.xml
+          name: QuickPrintSetupArtifact
           path: |
-            quick-print\setup\exe\update.xml
+            quick-print\setup\exe\Output\QuickPrintUpdateSetup.exe
           retention-days: 1 # <= 这里可以设置保留天数
-
-      # - name: Archive binaries
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: QuickPrintSetupArtifact
-      #     path: |
-      #       quick-print\setup\exe\Output\QuickPrintUpdateSetup.exe
-      #     retention-days: 1 # <= 这里可以设置保留天数
 
 
   create-release:
@@ -302,11 +292,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd ./artifacts
-          ls
           gh release upload $RELEASE_DATE ./*.zip
-          gh release upload $RELEASE_DATE ./QuickPrintSetupArtifact/QuickPrintUpdateSetup.exe
-          gh release upload $RELEASE_DATE ./QuickPrintSetupArtifact/QuickPrintSetup.exe
-          gh release upload $RELEASE_DATE ./update.xml
+          gh release upload $RELEASE_DATE ./QuickPrintSetupArtifact/*.exe
           gh release upload $RELEASE_DATE filelist.txt
           
       - name: LS Artifacts
