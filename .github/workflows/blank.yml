@@ -110,6 +110,14 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Cache External Libraries
+        uses: actions/cache@v3
+        with:
+          path: quick-print/external
+          key: ${{ runner.os }}-external-libs-${{ hashFiles('quick-print/tools/external_lib/libs.yaml', 'quick-print/tools/external_lib/download.py') }}
+          restore-keys: |
+            ${{ runner.os }}-external-libs-
+
       - name: Download External Lib
         run: |
           set PYTHONIOENCODING=utf-8
