@@ -50,10 +50,10 @@ jobs:
         run: |
           echo "Client payload: ${{ toJson(github.event.client_payload) }}"
 
-      # - name: Set up Python
-      #   uses: actions/setup-python@v2
-      #   with:
-      #     python-version: '3.8'
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
 
       - name: Install dding on non-Windows
         if: runner.os != 'Windows'
@@ -110,14 +110,6 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Cache External Libraries
-        uses: actions/cache@v3
-        with:
-          path: quick-print/external
-          key: ${{ runner.os }}-external-libs-${{ hashFiles('quick-print/tools/external_lib/libs.yaml', 'quick-print/tools/external_lib/download.py') }}
-          restore-keys: |
-            ${{ runner.os }}-external-libs-
-            
       - name: Download External Lib
         run: |
           set PYTHONIOENCODING=utf-8
@@ -170,17 +162,17 @@ jobs:
         shell: cmd
         run: |
           ls
-          cd quick-print\setup\exe
-          build.bat
+          cd quick-print\setup\exe || exit /b 1
+          build.bat || exit /b 1
           
-          build_update.bat
+          build_update.bat || exit /b 1
 
       - name: Inno update Package
         shell: cmd
         run: |
           ls
-          cd quick-print\setup\exe
-          build_update.bat
+          cd quick-print\setup\exe || exit /b 1
+          build_update.bat || exit /b 1
 
 
       - name: cp update to download server 
