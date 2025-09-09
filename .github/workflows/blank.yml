@@ -49,7 +49,6 @@ jobs:
       - name: show payload
         run: |
           echo "Client payload: ${{ toJson(github.event.client_payload) }}"
-
       # - name: Set up Python
       #   uses: actions/setup-python@v2
       #   with:
@@ -90,8 +89,6 @@ jobs:
           ]
           "@
           $config | Out-File -FilePath $HOME\.dding\config.json -Encoding utf8
-
-
       # - name: Set up proxy
       #   run: |
       #     git config --global http.proxy socks5://python:psdemo982@123.60.164.114:11654
@@ -102,15 +99,14 @@ jobs:
         run: |
           # $env:GIT_TRACE = "1"
           git clone https://oauth2:${{ secrets.MYUSER_TOKEN }}@${{ github.event.client_payload.gitaddress }}
-
         
           # git clone git@gitee.com:charlesabc/quick-print.git
           # git clone https://oauth2:${{ secrets.GITEE_TOKEN }}@gitee.com/charlesabc/quick-print.git 
-
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
       - name: Cache External Libraries
+        id: cache-external-libs
         uses: actions/cache@v3
         with:
           path: quick-print/external
@@ -118,7 +114,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-external-libs-
 
+      - name: Set cache status environment variable
+        shell: pwsh
+        run: |
+          if ("${{ steps.cache-external-libs.outputs.cache-hit }}" -eq "true") {
+            echo "EXTERNAL_LIBS_CACHED=true" >> $env:GITHUB_ENV
+            Write-Host "External libraries found in cache, skipping download"
+          } else {
+            echo "EXTERNAL_LIBS_CACHED=false" >> $env:GITHUB_ENV
+            Write-Host "External libraries not in cache, will download"
+          }
+
       - name: Download External Lib
+        if: env.EXTERNAL_LIBS_CACHED != 'true'
         run: |
           set PYTHONIOENCODING=utf-8
           cd quick-print/tools/external_lib
@@ -133,14 +141,10 @@ jobs:
           dir 
           cd quick-print/build
           cmake ../ -G "Visual Studio 17 2022" 
-
           # run CMake (additional options like -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE are possible)
           # it is recommended to specify the compiler version used for the build
           # cmake -S . -B cbuild/ -DCRASHPAD_BUILD_EXAMPLES=TRUE -DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_C_COMPILER=cl.exe -DCMAKE_BUILD_TYPE=Release
           # cmake --build cbuild/ --config Release -- /p:Configuration=Release
-
-
-
       - name: Build WebView
         run: |
           pwd
@@ -150,7 +154,6 @@ jobs:
           cd build
           cmake ../ -DBUILD_WXWIDGETS_EXAMPLES=ON -DBUILD_WEBVIEW_EXAMPLES=ON -DBUILD_ADVANCED_WXWIDGETS_EXAMPLE=ON
           cmake --build .
-
       - name: Build Office
         run: |
           pwd 
@@ -160,8 +163,6 @@ jobs:
           cd build
           cmake ../ BUILD_OFFICE_CONVERT_LIB=ON -DBUILD_TESTS=ON -DENABLE_GTEST=ON BUILD_OFFICE_CONVERT_DLL=ON BUILD_OFFICE_CONV_TOOL=ON BUILD_GUI_ASYNC_EXAMPLE=ON
           cmake --build .
-
-
       - name: Build with MSBuild
         run: msbuild -m -t:Build -p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} quick-print/build/quick-print.sln
 
@@ -174,15 +175,12 @@ jobs:
           build.bat || exit /b 1
           
           build_update.bat || exit /b 1
-
       - name: Inno update Package
         shell: cmd
         run: |
           ls
           cd quick-print\setup\exe || exit /b 1
           build_update.bat || exit /b 1
-
-
       - name: cp update to download server 
         shell: bash 
         run: |
@@ -191,7 +189,6 @@ jobs:
           cd quick-print/setup/exe 
           ls Output
           bash copy.sh
-
       - name: Check Status
         if: ${{ success() }}
         shell: pwsh
@@ -200,7 +197,6 @@ jobs:
           Write-Host "Workflow succeeded for $repoName!"
           dding "github action success :) for $repoName"
           
-
       - name: Check Status
         if: ${{ failure() }}
         shell: pwsh
@@ -208,7 +204,6 @@ jobs:
           $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
           Write-Host "Workflow failed for $repoName!"
           dding "github action fail :( $repoName"
-
       - name: Ls dir
         run: |
           echo "%cd%"
@@ -309,8 +304,6 @@ jobs:
         run: |
           ls 
           ls ./artifacts
-
-
   # dingding-error:
   #   runs-on: ubuntu-latest
   #   needs: [create-release]
@@ -348,4 +341,3 @@ jobs:
   #                "content": 'status:[对勾][对勾][对勾][100分]  quick_print 执行成功\n提交者: test\n${{ github.ref_type }}: master\nlog: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
   #            }
   #            }
-  
