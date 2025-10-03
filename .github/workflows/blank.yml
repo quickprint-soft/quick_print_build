@@ -120,7 +120,7 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: install requirements
+      - name: test cat
         shell: bash
         run: |
           set PYTHONIOENCODING=utf-8
