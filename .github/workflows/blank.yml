@@ -124,6 +124,14 @@ jobs:
         shell: bash
         run: |
           set PYTHONIOENCODING=utf-8
+          cd quick-print
+          git log
+          cat external\common\include\wrapper_logger.h
+          
+      - name: install requirements
+        shell: bash
+        run: |
+          set PYTHONIOENCODING=utf-8
           cd quick-print/tools/external_lib
           pip install -r requirements.txt
 
