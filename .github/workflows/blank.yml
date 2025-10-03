@@ -193,6 +193,19 @@ jobs:
           cd build
           cmake ../ BUILD_OFFICE_CONVERT_LIB=ON -DBUILD_TESTS=ON -DENABLE_GTEST=ON BUILD_OFFICE_CONVERT_DLL=ON BUILD_OFFICE_CONV_TOOL=ON BUILD_GUI_ASYNC_EXAMPLE=ON
           cmake --build .
+
+
+      - name: test cat1
+        shell: bash
+        run: |
+          set PYTHONIOENCODING=utf-8
+          cd quick-print
+          git log -n 5
+          cat external\\common\\include\\wrapper_logger.h
+          git status
+          git diff external/common/include/wrapper_logger.h
+
+          
       - name: Build with MSBuild
         run: msbuild -m -t:Build -p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} quick-print/build/quick-print.sln
 
