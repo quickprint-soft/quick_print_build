@@ -126,7 +126,7 @@ jobs:
           set PYTHONIOENCODING=utf-8
           cd quick-print
           git log
-          cat external\common\include\wrapper_logger.h
+          cat external\\common\\include\\wrapper_logger.h
           
       - name: install requirements
         shell: bash
