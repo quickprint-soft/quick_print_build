@@ -135,25 +135,25 @@ jobs:
           cd quick-print/tools/external_lib
           pip install -r requirements.txt
 
-      # - name: Cache External Libraries
-      #   id: cache-external-libs
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: quick-print/external
-      #     key: ${{ runner.os }}-external-libs-${{ hashFiles('quick-print/tools/external_lib/libs.yaml', 'quick-print/tools/external_lib/download.py') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-external-libs-
+      - name: Cache External Libraries
+        id: cache-external-libs
+        uses: actions/cache@v3
+        with:
+          path: quick-print/external
+          key: ${{ runner.os }}-external-libs-${{ hashFiles('quick-print/tools/external_lib/libs.yaml', 'quick-print/tools/external_lib/download.py') }}
+          restore-keys: |
+            ${{ runner.os }}-external-libs-
 
-      # - name: Set cache status environment variable
-      #   shell: pwsh
-      #   run: |
-      #     if ("${{ steps.cache-external-libs.outputs.cache-hit }}" -eq "true") {
-      #       echo "EXTERNAL_LIBS_CACHED=true" >> $env:GITHUB_ENV
-      #       Write-Host "External libraries found in cache, skipping download"
-      #     } else {
-      #       echo "EXTERNAL_LIBS_CACHED=false" >> $env:GITHUB_ENV
-      #       Write-Host "External libraries not in cache, will download"
-      #     }
+      - name: Set cache status environment variable
+        shell: pwsh
+        run: |
+          if ("${{ steps.cache-external-libs.outputs.cache-hit }}" -eq "true") {
+            echo "EXTERNAL_LIBS_CACHED=true" >> $env:GITHUB_ENV
+            Write-Host "External libraries found in cache, skipping download"
+          } else {
+            echo "EXTERNAL_LIBS_CACHED=false" >> $env:GITHUB_ENV
+            Write-Host "External libraries not in cache, will download"
+          }
 
       - name: Download External Lib
         if: env.EXTERNAL_LIBS_CACHED != 'true'
