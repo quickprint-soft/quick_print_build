@@ -135,14 +135,14 @@ jobs:
           cd quick-print/tools/external_lib
           pip install -r requirements.txt
 
-      - name: Cache External Libraries
-        id: cache-external-libs
-        uses: actions/cache@v3
-        with:
-          path: quick-print/external
-          key: ${{ runner.os }}-external-libs-${{ hashFiles('quick-print/tools/external_lib/libs.yaml', 'quick-print/tools/external_lib/download.py') }}
-          restore-keys: |
-            ${{ runner.os }}-external-libs-
+      # - name: Cache External Libraries
+      #   id: cache-external-libs
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: quick-print/external
+      #     key: ${{ runner.os }}-external-libs-${{ hashFiles('quick-print/tools/external_lib/libs.yaml', 'quick-print/tools/external_lib/download.py') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-external-libs-
 
       # - name: Set cache status environment variable
       #   shell: pwsh
