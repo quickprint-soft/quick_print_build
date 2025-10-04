@@ -120,13 +120,13 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: test cat
-        shell: bash
-        run: |
-          set PYTHONIOENCODING=utf-8
-          cd quick-print
-          git log -n 5
-          cat external\\common\\include\\wrapper_logger.h
+      # - name: test cat
+      #   shell: bash
+      #   run: |
+      #     set PYTHONIOENCODING=utf-8
+      #     cd quick-print
+      #     git log -n 5
+      #     cat external\\common\\include\\wrapper_logger.h
           
       - name: install requirements
         shell: bash
@@ -144,16 +144,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-external-libs-
 
-      - name: Set cache status environment variable
-        shell: pwsh
-        run: |
-          if ("${{ steps.cache-external-libs.outputs.cache-hit }}" -eq "true") {
-            echo "EXTERNAL_LIBS_CACHED=true" >> $env:GITHUB_ENV
-            Write-Host "External libraries found in cache, skipping download"
-          } else {
-            echo "EXTERNAL_LIBS_CACHED=false" >> $env:GITHUB_ENV
-            Write-Host "External libraries not in cache, will download"
-          }
+      # - name: Set cache status environment variable
+      #   shell: pwsh
+      #   run: |
+      #     if ("${{ steps.cache-external-libs.outputs.cache-hit }}" -eq "true") {
+      #       echo "EXTERNAL_LIBS_CACHED=true" >> $env:GITHUB_ENV
+      #       Write-Host "External libraries found in cache, skipping download"
+      #     } else {
+      #       echo "EXTERNAL_LIBS_CACHED=false" >> $env:GITHUB_ENV
+      #       Write-Host "External libraries not in cache, will download"
+      #     }
 
       - name: Download External Lib
         if: env.EXTERNAL_LIBS_CACHED != 'true'
@@ -175,6 +175,7 @@ jobs:
           # it is recommended to specify the compiler version used for the build
           # cmake -S . -B cbuild/ -DCRASHPAD_BUILD_EXAMPLES=TRUE -DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_C_COMPILER=cl.exe -DCMAKE_BUILD_TYPE=Release
           # cmake --build cbuild/ --config Release -- /p:Configuration=Release
+          
       - name: Build WebView
         run: |
           pwd
@@ -195,15 +196,15 @@ jobs:
           cmake --build .
 
 
-      - name: test cat1
-        shell: bash
-        run: |
-          set PYTHONIOENCODING=utf-8
-          cd quick-print
-          git log -n 5
-          cat external\\common\\include\\wrapper_logger.h
-          git status
-          git diff external/common/include/wrapper_logger.h
+      # - name: test cat1
+      #   shell: bash
+      #   run: |
+      #     set PYTHONIOENCODING=utf-8
+      #     cd quick-print
+      #     git log -n 5
+      #     cat external\\common\\include\\wrapper_logger.h
+      #     git status
+      #     git diff external/common/include/wrapper_logger.h
 
           
       - name: Build with MSBuild
