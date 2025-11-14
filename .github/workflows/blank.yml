@@ -48,6 +48,7 @@ jobs:
 
 
       - name: Add Gitee ssh-key to known hosts
+        shell: bash
         run: |
           cat >$HOME\.ssh\known_hosts <<Eof
             # gitee.com:22 SSH-2.0-ssh-pilot-1.8.4
