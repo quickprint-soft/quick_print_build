@@ -234,16 +234,22 @@ jobs:
         shell: cmd
         run: |
           ls
-          cd quick-print\setup\exe || exit /b 1
-          build.bat || exit /b 1
+          cd quick-print\setup\exe 
+          if errorlevel 1 exit 1
           
-          build_update.bat || exit /b 1
+          build.bat
+          if errorlevel 1 exit 1
+          
+          build_update.bat 
+          if errorlevel 1 exit 1
       - name: Inno update Package
         shell: cmd
         run: |
           ls
           cd quick-print\setup\exe || exit /b 1
-          build_update.bat || exit /b 1
+          build_update.bat
+          if errorlevel 1 exit 1
+          
       - name: cp update to download server 
         shell: bash 
         run: |
