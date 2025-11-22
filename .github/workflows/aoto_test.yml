@@ -1,168 +1,274 @@
-name: CI
+name: GTest CI with Reports
 
+# 触发条件
 on:
-  repository_dispatch:
-    types:
-      - quick_print_test
+  # 推送到指定分支时运行
   push:
-    branches: [ main ]
+    branches: 
+      - main
+      - develop
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  
+  # Pull Request 时运行
   pull_request:
-    branches: [ main ]
-  #schedule:
-    # Runs the workflow once a day at midnight UTC
-    # - cron: '0 */12 * * *'
+    branches: 
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  
+  # 允许手动触发
+  workflow_dispatch:
+    inputs:
+      test_filter:
+        description: 'GTest 过滤器（如: ImageToPdfTestSuite.*）'
+        required: false
+        default: '*'
+  
+  # 定时运行
+  schedule:
+    # 每天早上 9:00（北京时间 = UTC 01:00）
+    - cron: '0 1 * * *'
+    
+    # 其他常用时间配置（注释掉的可以根据需要启用）：
+    # 工作日早上 9:00
+    # - cron: '0 1 * * 1-5'
+    
+    # 每天早上 9:00 和晚上 6:00
+    # - cron: '0 1,10 * * *'
+    
+    # 每周一早上 9:00
+    # - cron: '0 1 * * 1'
+    
+    # 每 6 小时一次
+    # - cron: '0 */6 * * *'
 
+# 环境变量
 env:
-  DEFAULT_DDING_SECRET: 'SECbe4003c4d14c740788cf9383fa1d8d77c029a03e6df99dde528274b9bcc17926'
-  DEFAULT_DDING_TOKEN: 'fd87df4f83611b4c4cf31d5ad48f890f9603b57b1cac3d52fb80df8b86a5b629'
-
-concurrency:
-  group: build-latest
-  cancel-in-progress: true
+  BUILD_TYPE: Release
+  CMAKE_GENERATOR: "Visual Studio 17 2022"
 
 jobs:
-  msw-msvs:
-    runs-on: windows-${{ matrix.vsversion }}
-    name: wxMSW vs${{ matrix.vsversion }} ${{ matrix.configuration }} ${{ matrix.platform }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - configuration: 'Release'
-            platform: 'x64'
-            vsversion: 2022
+  test:
+    name: 运行测试并生成报告
+    runs-on: windows-latest
+    timeout-minutes: 60  # 超时保护
+    
+    # 权限配置
+    permissions:
+      contents: read
+      pull-requests: write  # 允许在 PR 中添加评论
+      actions: read
+    
     steps:
-      - uses: lukka/get-cmake@latest
-
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-
-      - name: show payload
-        run: |
-          echo "Client payload: ${{ toJson(github.event.client_payload) }}"
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
-
-      - name: Install dding on non-Windows
-        if: runner.os != 'Windows'
-        run: |
-          pip install dding
-          mkdir -p ~/.dding
-          dding_secret="${{ github.event.client_payload.dding_secret || env.DEFAULT_DDING_SECRET }}"
-          dding_token="${{ github.event.client_payload.dding_token || env.DEFAULT_DDING_TOKEN }}"
-          cat <<EOF > ~/.dding/config.json
-          [
-              {
-                  "group": "default",
-                  "secret": "$dding_secret",
-                  "token": "$dding_token"
-              }
-          ]
-          EOF
-
-      - name: Install dding on Windows
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          pip install dding
-          New-Item -Path $HOME\.dding -ItemType Directory -Force
-          $dding_secret = "${{ github.event.client_payload.dding_secret || env.DEFAULT_DDING_SECRET }}"
-          $dding_token = "${{ github.event.client_payload.dding_token || env.DEFAULT_DDING_TOKEN }}"
-          $config = @"
-          [
-              {
-                  "group": "default",
-                  "secret": "$dding_secret",
-                  "token": "$dding_token"
-              }
-          ]
-          "@
-          $config | Out-File -FilePath $HOME\.dding\config.json -Encoding utf8
-
-      - name: Clone repository from Gitee with trace
-        shell: pwsh
-        run: |
-          git clone https://oauth2:${{ secrets.MYUSER_TOKEN }}@github.com/quickprint-soft/quick-print.git
-
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
-
-      - name: CMake
-        shell: powershell
-        run: |
-          pwd
-          dir 
-          cd quick-print/build
-          cmake ../ -G "Visual Studio 17 2022"
-
-      - name: Download External Lib
-        run: |
-          set PYTHONIOENCODING=utf-8
-          cd quick-print/tools/external_lib
-          pip install -r requirements.txt
-          python download.py --arch x64 --build_types dbg --mul
-          python download.py --arch x64 --build_types rel --mul
-
-      - name: Build with MSBuild
-        run: |
-          cd quick-print/officeConvert
-          mkdir build
-          cd build
-          cmake .. -G "Visual Studio 17 2022" -A x64 -DBUILD_OFFICE_CONVERT_LIB=ON -DBUILD_OFFICE_CONV_TOOL=ON  -DBUILD_TESTS=ON
-          msbuild quick-print/officeConvert/build/officeConvert.sln /p:Configuration=Release /p:Platform=x64
-          cd quick-print/librel
-          dir
-          
-          
-          
+    # ========================================
+    # 1. 环境准备
+    # ========================================
+    
+    - name: 📥 检出代码
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0  # 获取完整历史（用于版本信息）
+    
+    - name: 🔧 配置 MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+    
+    - name: 📦 配置 Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'  # 缓存 pip 依赖
+    
+    - name: 📚 安装 Python 依赖
+      run: |
+        python -m pip install --upgrade pip
+        # 如果有 requirements.txt 可以在这里安装
+        # pip install -r requirements.txt
+    
+    # ========================================
+    # 2. 构建项目
+    # ========================================
+    
+    - name: 🔍 检查缓存
+      id: cache-build
+      uses: actions/cache@v3
+      with:
+        path: |
+          build
+          external
+        key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-build-
+    
+    - name: 🏗️ 配置 CMake
+      run: |
+        cmake -B build -G "${{ env.CMAKE_GENERATOR }}" -A x64
+    
+    - name: 🔨 编译项目
+      run: |
+        cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
+    
+    # ========================================
+    # 3. 运行测试
+    # ========================================
+    
+    - name: 🧪 运行测试
+      id: test
+      continue-on-error: true  # 即使测试失败也继续执行后续步骤
+      shell: bash
+      run: |
+        cd build/x64/${{ env.BUILD_TYPE }}
         
+        # 设置测试过滤器
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.test_filter }}" ]; then
+          TEST_FILTER="${{ github.event.inputs.test_filter }}"
+          echo "🎯 使用自定义过滤器: $TEST_FILTER"
+          ./gtest_run.exe --gtest_filter="$TEST_FILTER"
+        elif [ "${{ github.event_name }}" == "schedule" ]; then
+          echo "⏰ 定时任务：运行完整测试套件"
+          ./gtest_run.exe
+        else
+          echo "📝 常规测试运行"
+          ./gtest_run.exe
+        fi
+      
+    - name: 📊 生成 HTML 报告
+      if: always()
+      run: |
+        python test-prj/generate_html_report.py test-reports/test_report_latest.xml test-reports/test_report_latest.html
+    
+    - name: 📈 生成测试摘要
+      if: always()
+      run: |
+        python test-prj/generate_summary.py test-reports/test_report_latest.xml
+    
+    # ========================================
+    # 4. 上传测试报告
+    # ========================================
+    
+    - name: 📦 上传测试报告（Artifacts）
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports-${{ github.run_number }}-${{ github.run_attempt }}
+        path: |
+          test-reports/*.xml
+          test-reports/*.html
+          test-reports/summary.txt
+        retention-days: 30  # 保留 30 天
+        compression-level: 6  # 压缩级别（0-9）
+    
+    # ========================================
+    # 5. 展示测试结果
+    # ========================================
+    
+    - name: 📋 添加测试摘要到 Actions Summary
+      if: always()
+      shell: bash
+      run: |
+        echo "## 🧪 测试执行报告" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # 添加基本信息
+        echo "**触发方式**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**分支**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**提交**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**运行编号**: #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # 添加测试结果摘要
+        if [ -f test-reports/summary.txt ]; then
+          cat test-reports/summary.txt >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️ 未找到测试摘要文件" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        echo "📥 [下载完整报告](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+    
+    # ========================================
+    # 6. Pull Request 评论
+    # ========================================
+    
+    - name: 💬 在 PR 中添加测试结果评论
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          
+          // 读取测试摘要
+          let summary = '⚠️ 未生成测试报告';
+          try {
+            summary = fs.readFileSync('test-reports/summary.txt', 'utf8');
+          } catch (error) {
+            console.error('读取摘要文件失败:', error);
+          }
+          
+          // 构建评论内容
+          const comment = `## 🧪 测试报告
+          
+${summary}
 
-      # - name: Inno Package
-      #   shell: cmd
-      #   run: |
-      #     ls
-      #     cd quick-print\setup\exe
-      #     build.bat
+---
 
-      - name: Check Status
-        if: ${{ success() }}
-        shell: pwsh
-        run: |
-          $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
-          Write-Host "Workflow succeeded for $repoName!"
-          dding "github action auto test success :) for $repoName"
+📊 **详细信息**
+- **运行编号**: #${{ github.run_number }}
+- **触发提交**: \`${{ github.event.pull_request.head.sha }}\`
+- **测试状态**: ${{ steps.test.outcome == 'success' && '✅ 通过' || '❌ 失败' }}
 
-      - name: Check Status
-        if: ${{ failure() }}
-        shell: pwsh
-        run: |
-          $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
-          Write-Host "Workflow failed for $repoName!"
-          dding "github action auto test fail :( $repoName"
+📥 [查看完整报告和日志](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-      # - name: Ls dir
-      #   run: |
-      #     echo "%cd%"
-      #     dir
-      #     cd quick-print
-      #     dir 
-
-      # - name: Archive binaries
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: librel64
-      #     path: |
-      #       quick-print\librel64
-      #     retention-days: 1
-
-      # - name: Archive binaries
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: QuickPrintSetupArtifact
-      #     path: |
-      #       quick-print\setup\exe\Output\QuickPrintSetup.exe
-      #     retention-days: 1
+<sub>🤖 由 GitHub Actions 自动生成</sub>`;
+          
+          // 发布评论
+          try {
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+            console.log('✅ PR 评论已发布');
+          } catch (error) {
+            console.error('❌ 发布评论失败:', error);
+          }
+    
+    # ========================================
+    # 7. 失败通知（仅定时任务）
+    # ========================================
+    
+    - name: � 定时任务失败通知
+      if: failure() && github.event_name == 'schedule'
+      shell: bash
+      run: |
+        echo "⚠️ 定时测试失败！"
+        echo ""
+        echo "📅 运行时间: $(date)"
+        echo "📊 查看详情: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        echo ""
+        echo "💡 提示: 可以配置邮件或 Slack 通知"
+    
+    # ========================================
+    # 8. 最终状态检查
+    # ========================================
+    
+    - name: ✅ 检查测试结果
+      if: always()
+      shell: bash
+      run: |
+        if [ "${{ steps.test.outcome }}" == "failure" ]; then
+          echo "❌ 测试失败！"
+          exit 1
+        elif [ "${{ steps.test.outcome }}" == "success" ]; then
+          echo "✅ 所有测试通过！"
+          exit 0
+        else
+          echo "⚠️ 测试状态未知"
+          exit 1
+        fi
