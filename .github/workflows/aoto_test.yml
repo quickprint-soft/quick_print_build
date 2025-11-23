@@ -10,6 +10,13 @@ on:
 jobs:
   build-and-test:
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - configuration: 'Release'
+            platform: 'x64'
+            vsversion: 2022
     
     steps:
     - name: 📥 检出代码
@@ -119,7 +126,7 @@ jobs:
     - name: 🧪 运行 GTest 测试套件
       working-directory: quick-print
       run: |
-        $env:PATH += ";$PWD\lib64"
+        $env:PATH += ";$PWD\librel64"
         .\librel64\gtest_run.exe --gtest_output=xml:test_reports/test_results.xml --gtest_print_time=1
         $testExitCode = $LASTEXITCODE
         echo "TEST_EXIT_CODE=$testExitCode" >> $env:GITHUB_ENV
