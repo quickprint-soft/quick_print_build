@@ -77,6 +77,38 @@ jobs:
     - name: 🔨 编译项目 (Release)
       working-directory: quick-print/build
       run: cmake --build . --target gtest_run --config Release --parallel
+
+    - name: Build WebView
+      run: |
+        pwd
+        dir 
+        cd quick-print/WebView
+        mkdir build
+        cd build
+        cmake ../ -DBUILD_WXWIDGETS_EXAMPLES=ON -DBUILD_WEBVIEW_EXAMPLES=ON -DBUILD_ADVANCED_WXWIDGETS_EXAMPLE=ON
+        cmake --build .
+    - name: Build Office
+      run: |
+        pwd 
+        dir 
+        cd quick-print/officeConvert
+        mkdir build
+        cd build
+        cmake ../ BUILD_OFFICE_CONVERT_LIB=ON -DBUILD_TESTS=ON -DENABLE_GTEST=ON BUILD_OFFICE_CONVERT_DLL=ON BUILD_OFFICE_CONV_TOOL=ON BUILD_GUI_ASYNC_EXAMPLE=ON
+        cmake --build .
+    # - name: test cat1
+    #   shell: bash
+    #   run: |
+    #     set PYTHONIOENCODING=utf-8
+    #     cd quick-print
+    #     git log -n 5
+    #     cat external\\common\\include\\wrapper_logger.h
+    #     git status
+    #     git diff external/common/include/wrapper_logger.h
+
+        
+    - name: Build with MSBuild
+      run: msbuild -m -t:Build -p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} quick-print/build/quick-print.sln
         
     - name: 📂 准备测试报告目录
       run: |
@@ -85,9 +117,10 @@ jobs:
       shell: pwsh
         
     - name: 🧪 运行 GTest 测试套件
+      working-directory: quick-print
       run: |
         $env:PATH += ";$PWD\lib64"
-        .\lib64\gtest_run.exe --gtest_output=xml:test_reports/test_results.xml --gtest_print_time=1
+        .\librel64\gtest_run.exe --gtest_output=xml:test_reports/test_results.xml --gtest_print_time=1
         $testExitCode = $LASTEXITCODE
         echo "TEST_EXIT_CODE=$testExitCode" >> $env:GITHUB_ENV
         exit 0
@@ -95,9 +128,10 @@ jobs:
       continue-on-error: true
       
     - name: 📊 生成 HTML 测试报告
+      working-directory: quick-print/test-prj
       if: always()
       run: |
-        python generate_test_report.py -i test_reports/test_results.xml -o test_reports/test_report.html
+        python generate_test_report.py -i ..\test_reports/test_results.xml -o ..\test_reports/test_report.html
       continue-on-error: true
       
     - name: 📝 生成测试摘要
