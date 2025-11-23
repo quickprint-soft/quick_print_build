@@ -74,11 +74,11 @@ jobs:
       working-directory: quick-print/build
       run: cmake .. -G "Visual Studio 17 2022" -A x64
       
-    - name: 🔨 编译项目 (Release)
-      working-directory: quick-print/build
-      run: cmake --build . --target gtest_run --config Release --parallel
+    # - name: 🔨 编译项目 (Release)
+    #   working-directory: quick-print/build
+    #   run: cmake --build . --target gtest_run --config Release --parallel
 
-    - name: Build WebView
+    - name: 🔨 Build WebView
       run: |
         pwd
         dir 
@@ -87,7 +87,7 @@ jobs:
         cd build
         cmake ../ -DBUILD_WXWIDGETS_EXAMPLES=ON -DBUILD_WEBVIEW_EXAMPLES=ON -DBUILD_ADVANCED_WXWIDGETS_EXAMPLE=ON
         cmake --build .
-    - name: Build Office
+    - name: 🔨 Build Office
       run: |
         pwd 
         dir 
@@ -107,7 +107,7 @@ jobs:
     #     git diff external/common/include/wrapper_logger.h
 
         
-    - name: Build with MSBuild
+    - name: 🔨 Build with MSBuild
       run: msbuild -m -t:Build -p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} quick-print/build/quick-print.sln
         
     - name: 📂 准备测试报告目录
