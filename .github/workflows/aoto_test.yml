@@ -64,11 +64,11 @@ jobs:
         #   Write-Host "download_freeimage.bat not found, skipping..."
         # }
         
-    - name: 📦 创建构建目录
-      run: |
-        if (Test-Path build) { Remove-Item -Recurse -Force build }
-        mkdir quick-print/build
-      shell: pwsh
+    # - name: 📦 创建构建目录
+    #   run: |
+    #     if (Test-Path build) { Remove-Item -Recurse -Force build }
+    #     mkdir quick-print/build
+    #   shell: pwsh
         
     - name: ⚙️ 配置 CMake
       working-directory: quick-print/build
