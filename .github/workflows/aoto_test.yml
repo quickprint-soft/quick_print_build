@@ -1,274 +1,129 @@
-name: GTest CI with Reports
+name: GTest CI/CD Pipeline
 
-# 触发条件
 on:
-  # 推送到指定分支时运行
   push:
-    branches: 
-      - main
-      - develop
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-  
-  # Pull Request 时运行
+    branches: [ main, develop, master ]
   pull_request:
-    branches: 
-      - main
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-  
-  # 允许手动触发
-  workflow_dispatch:
-    inputs:
-      test_filter:
-        description: 'GTest 过滤器（如: ImageToPdfTestSuite.*）'
-        required: false
-        default: '*'
-  
-  # 定时运行
-  schedule:
-    # 每天早上 9:00（北京时间 = UTC 01:00）
-    - cron: '0 1 * * *'
-    
-    # 其他常用时间配置（注释掉的可以根据需要启用）：
-    # 工作日早上 9:00
-    # - cron: '0 1 * * 1-5'
-    
-    # 每天早上 9:00 和晚上 6:00
-    # - cron: '0 1,10 * * *'
-    
-    # 每周一早上 9:00
-    # - cron: '0 1 * * 1'
-    
-    # 每 6 小时一次
-    # - cron: '0 */6 * * *'
-
-# 环境变量
-env:
-  BUILD_TYPE: Release
-  CMAKE_GENERATOR: "Visual Studio 17 2022"
+    branches: [ main, develop, master ]
+  workflow_dispatch:  # 允许手动触发
 
 jobs:
-  test:
-    name: 运行测试并生成报告
+  build-and-test:
     runs-on: windows-latest
-    timeout-minutes: 60  # 超时保护
-    
-    # 权限配置
-    permissions:
-      contents: read
-      pull-requests: write  # 允许在 PR 中添加评论
-      actions: read
     
     steps:
-    # ========================================
-    # 1. 环境准备
-    # ========================================
-    
     - name: 📥 检出代码
       uses: actions/checkout@v4
       with:
-        submodules: recursive
-        fetch-depth: 0  # 获取完整历史（用于版本信息）
-    
-    - name: 🔧 配置 MSBuild
-      uses: microsoft/setup-msbuild@v1.1
-    
-    - name: 📦 配置 Python
-      uses: actions/setup-python@v4
+        submodules: recursive  # 如果有子模块
+        
+    - name: 🐍 设置 Python 环境
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
         cache: 'pip'  # 缓存 pip 依赖
-    
-    - name: 📚 安装 Python 依赖
-      run: |
-        python -m pip install --upgrade pip
-        # 如果有 requirements.txt 可以在这里安装
-        # pip install -r requirements.txt
-    
-    # ========================================
-    # 2. 构建项目
-    # ========================================
-    
-    - name: 🔍 检查缓存
-      id: cache-build
-      uses: actions/cache@v3
-      with:
-        path: |
-          build
-          external
-        key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-build-
-    
-    - name: 🏗️ 配置 CMake
-      run: |
-        cmake -B build -G "${{ env.CMAKE_GENERATOR }}" -A x64
-    
-    - name: 🔨 编译项目
-      run: |
-        cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
-    
-    # ========================================
-    # 3. 运行测试
-    # ========================================
-    
-    - name: 🧪 运行测试
-      id: test
-      continue-on-error: true  # 即使测试失败也继续执行后续步骤
-      shell: bash
-      run: |
-        cd build/x64/${{ env.BUILD_TYPE }}
         
-        # 设置测试过滤器
-        if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.test_filter }}" ]; then
-          TEST_FILTER="${{ github.event.inputs.test_filter }}"
-          echo "🎯 使用自定义过滤器: $TEST_FILTER"
-          ./gtest_run.exe --gtest_filter="$TEST_FILTER"
-        elif [ "${{ github.event_name }}" == "schedule" ]; then
-          echo "⏰ 定时任务：运行完整测试套件"
-          ./gtest_run.exe
-        else
-          echo "📝 常规测试运行"
-          ./gtest_run.exe
-        fi
+    - name: 🔧 配置 MSVC 编译器
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+        
+    - name: 📦 创建构建目录
+      run: |
+        if (Test-Path build) { Remove-Item -Recurse -Force build }
+        mkdir build
+      shell: pwsh
+        
+    - name: ⚙️ 配置 CMake
+      working-directory: build
+      run: cmake .. -G "Visual Studio 17 2022" -A x64
       
-    - name: 📊 生成 HTML 报告
+    - name: 🔨 编译项目 (Release)
+      working-directory: build
+      run: cmake --build . --target gtest_run --config Release --parallel
+        
+    - name: 📂 准备测试报告目录
+      run: |
+        if (Test-Path test_reports) { Remove-Item -Recurse -Force test_reports }
+        mkdir test_reports
+      shell: pwsh
+        
+    - name: 🧪 运行 GTest 测试套件
+      run: |
+        $env:PATH += ";$PWD\lib64"
+        .\lib64\gtest_run.exe --gtest_output=xml:test_reports/test_results.xml --gtest_print_time=1
+        $testExitCode = $LASTEXITCODE
+        echo "TEST_EXIT_CODE=$testExitCode" >> $env:GITHUB_ENV
+        exit 0
+      shell: pwsh
+      continue-on-error: true
+      
+    - name: 📊 生成 HTML 测试报告
       if: always()
       run: |
-        python test-prj/generate_html_report.py test-reports/test_report_latest.xml test-reports/test_report_latest.html
-    
-    - name: 📈 生成测试摘要
+        python generate_test_report.py -i test_reports/test_results.xml -o test_reports/test_report.html
+      continue-on-error: true
+      
+    - name: 📝 生成测试摘要
       if: always()
       run: |
-        python test-prj/generate_summary.py test-reports/test_report_latest.xml
-    
-    # ========================================
-    # 4. 上传测试报告
-    # ========================================
-    
-    - name: 📦 上传测试报告（Artifacts）
-      if: always()
+        if (Test-Path test_reports/test_results.xml) {
+          $xml = [xml](Get-Content test_reports/test_results.xml)
+          $testsuites = $xml.testsuites
+          $total = $testsuites.tests
+          $failures = $testsuites.failures
+          $errors = $testsuites.errors
+          $time = $testsuites.time
+          $passed = [int]$total - [int]$failures - [int]$errors
+          $passRate = if ([int]$total -gt 0) { [math]::Round(($passed / [int]$total) * 100, 2) } else { 0 }
+          
+          echo "## 🧪 GTest 测试结果" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "| 指标 | 数值 |" >> $env:GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $env:GITHUB_STEP_SUMMARY
+          echo "| ✅ 通过 | $passed / $total |" >> $env:GITHUB_STEP_SUMMARY
+          echo "| ❌ 失败 | $failures |" >> $env:GITHUB_STEP_SUMMARY
+          echo "| ⚠️ 错误 | $errors |" >> $env:GITHUB_STEP_SUMMARY
+          echo "| 📈 通过率 | $passRate% |" >> $env:GITHUB_STEP_SUMMARY
+          echo "| ⏱️ 总耗时 | $time 秒 |" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          
+          if ([int]$failures -gt 0 -or [int]$errors -gt 0) {
+            echo "### ⚠️ 存在失败的测试用例" >> $env:GITHUB_STEP_SUMMARY
+            echo "" >> $env:GITHUB_STEP_SUMMARY
+            echo "请查看 [测试报告](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) 了解详情。" >> $env:GITHUB_STEP_SUMMARY
+          } else {
+            echo "### ✅ 所有测试通过！" >> $env:GITHUB_STEP_SUMMARY
+          }
+        }
+      shell: pwsh
+      
+    - name: 📤 上传测试报告 (Artifacts)
       uses: actions/upload-artifact@v4
-      with:
-        name: test-reports-${{ github.run_number }}-${{ github.run_attempt }}
-        path: |
-          test-reports/*.xml
-          test-reports/*.html
-          test-reports/summary.txt
-        retention-days: 30  # 保留 30 天
-        compression-level: 6  # 压缩级别（0-9）
-    
-    # ========================================
-    # 5. 展示测试结果
-    # ========================================
-    
-    - name: 📋 添加测试摘要到 Actions Summary
       if: always()
-      shell: bash
-      run: |
-        echo "## 🧪 测试执行报告" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        
-        # 添加基本信息
-        echo "**触发方式**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-        echo "**分支**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-        echo "**提交**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "**运行编号**: #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        
-        # 添加测试结果摘要
-        if [ -f test-reports/summary.txt ]; then
-          cat test-reports/summary.txt >> $GITHUB_STEP_SUMMARY
-        else
-          echo "⚠️ 未找到测试摘要文件" >> $GITHUB_STEP_SUMMARY
-        fi
-        
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "---" >> $GITHUB_STEP_SUMMARY
-        echo "📥 [下载完整报告](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
-    
-    # ========================================
-    # 6. Pull Request 评论
-    # ========================================
-    
-    - name: 💬 在 PR 中添加测试结果评论
-      if: github.event_name == 'pull_request' && always()
-      uses: actions/github-script@v7
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const fs = require('fs');
-          
-          // 读取测试摘要
-          let summary = '⚠️ 未生成测试报告';
-          try {
-            summary = fs.readFileSync('test-reports/summary.txt', 'utf8');
-          } catch (error) {
-            console.error('读取摘要文件失败:', error);
-          }
-          
-          // 构建评论内容
-          const comment = `## 🧪 测试报告
-          
-$${summary}
-
----
-
-📊 **详细信息**
-- **运行编号**: #${{ github.run_number }}
-- **触发提交**: \`${{ github.event.pull_request.head.sha }}\`
-- **测试状态**: ${{ steps.test.outcome == 'success' && '✅ 通过' || '❌ 失败' }}
-
-📥 [查看完整报告和日志](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-<sub>🤖 由 GitHub Actions 自动生成</sub>`;
-          
-          // 发布评论
-          try {
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-            console.log('✅ PR 评论已发布');
-          } catch (error) {
-            console.error('❌ 发布评论失败:', error);
-          }
-    
-    # ========================================
-    # 7. 失败通知（仅定时任务）
-    # ========================================
-    
-    - name: � 定时任务失败通知
-      if: failure() && github.event_name == 'schedule'
-      shell: bash
-      run: |
-        echo "⚠️ 定时测试失败！"
-        echo ""
-        echo "📅 运行时间: $(date)"
-        echo "📊 查看详情: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        echo ""
-        echo "💡 提示: 可以配置邮件或 Slack 通知"
-    
-    # ========================================
-    # 8. 最终状态检查
-    # ========================================
-    
+        name: test-reports-${{ github.run_number }}
+        path: |
+          test_reports/test_results.xml
+          test_reports/test_report.html
+        retention-days: 30
+        
+    - name: 📊 发布测试结果到 PR
+      uses: EnricoMi/publish-unit-test-result-action/windows@v2
+      if: always() && github.event_name == 'pull_request'
+      with:
+        files: test_reports/test_results.xml
+        check_name: 🧪 GTest 测试结果
+        comment_title: 📊 GTest 测试报告
+        comment_mode: always
+        
     - name: ✅ 检查测试结果
       if: always()
-      shell: bash
       run: |
-        if [ "${{ steps.test.outcome }}" == "failure" ]; then
-          echo "❌ 测试失败！"
+        if ($env:TEST_EXIT_CODE -ne "0") {
+          Write-Host "❌ 测试失败！退出码: $env:TEST_EXIT_CODE"
           exit 1
-        elif [ "${{ steps.test.outcome }}" == "success" ]; then
-          echo "✅ 所有测试通过！"
-          exit 0
-        else
-          echo "⚠️ 测试状态未知"
-          exit 1
-        fi
+        } else {
+          Write-Host "✅ 所有测试通过！"
+        }
+      shell: pwsh
