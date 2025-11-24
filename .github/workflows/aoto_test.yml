@@ -207,7 +207,7 @@ jobs:
         ssh-keygen -y -f <(printf "%s" "${{ secrets.SSH_KEY }}") || echo "无法派生公钥"
     
         echo "测试 SSH 连接："
-        ssh -vvv -o StrictHostKeyChecking=no xhadmin@download.happygogo.site 'echo 远端OK'
+        ssh -vvv -o StrictHostKeyChecking=no xhpadmin@download.happygogo.site 'echo 远端OK'
         
     # - name: 查看已加载的密钥指纹
     #   run: |
@@ -222,7 +222,7 @@ jobs:
     - name: upload testfile
       shell: bash
       run: |
-        scp  -o StrictHostKeyChecking=no quick-print/test_reports/test_report.html xhadmin@download.happygogo.site:/www/wwwroot/download.happygogo.site/quick-print-test-report
+        scp  -o StrictHostKeyChecking=no quick-print/test_reports/test_report.html xhpadmin@download.happygogo.site:/www/wwwroot/download.happygogo.site/quick-print-test-report
       
     - name: 📤 上传测试报告 (Artifacts)
       uses: actions/upload-artifact@v4
