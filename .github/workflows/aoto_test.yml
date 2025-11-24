@@ -186,6 +186,7 @@ jobs:
         }
       shell: pwsh
 
+
     - name: 列出测试报告文件
       run: |
         ls -l quick-print/test_reports/
@@ -195,15 +196,27 @@ jobs:
       uses: webfactory/ssh-agent@v0.5.3
       with:
         ssh-private-key: ${{ secrets.SSH_KEY }}
-    
-    - name: 查看已加载的密钥指纹
+
+    - name: 调试 SSH (Bash)
+      shell: bash
       run: |
         echo "ssh-add -l 输出："
         ssh-add -l || echo "没有加载到任何密钥"
     
-        # 从私钥派生公钥，方便与你服务器的 authorized_keys 对比
         echo "派生公钥："
         ssh-keygen -y -f <(printf "%s" "${{ secrets.SSH_KEY }}") || echo "无法派生公钥"
+    
+        echo "测试 SSH 连接："
+        ssh -vvv -o StrictHostKeyChecking=no xhadmin@download.happygogo.site 'echo 远端OK'
+        
+    # - name: 查看已加载的密钥指纹
+    #   run: |
+    #     echo "ssh-add -l 输出："
+    #     ssh-add -l || echo "没有加载到任何密钥"
+    
+    #     # 从私钥派生公钥，方便与你服务器的 authorized_keys 对比
+    #     echo "派生公钥："
+    #     ssh-keygen -y -f <(printf "%s" "${{ secrets.SSH_KEY }}") || echo "无法派生公钥"
 
       
     - name: upload testfile
