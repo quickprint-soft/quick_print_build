@@ -60,7 +60,12 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
-
+    - name: get test case
+      shell: cmd
+      run: |
+        set PYTHONIOENCODING=utf-8
+        cd quick-print/test-prj
+        pulltestdata.bat
         
     - name: install requirements
       shell: bash
