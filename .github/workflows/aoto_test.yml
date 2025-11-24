@@ -210,17 +210,17 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_KEY }}
 
-    - name: 调试 SSH (Bash)
-      shell: bash
-      run: |
-        echo "ssh-add -l 输出："
-        ssh-add -l || echo "没有加载到任何密钥"
+    # - name: 调试 SSH (Bash)
+    #   shell: bash
+    #   run: |
+    #     echo "ssh-add -l 输出："
+    #     ssh-add -l || echo "没有加载到任何密钥"
     
-        echo "派生公钥："
-        ssh-keygen -y -f <(printf "%s" "${{ secrets.SSH_KEY }}") || echo "无法派生公钥"
+    #     echo "派生公钥："
+    #     ssh-keygen -y -f <(printf "%s" "${{ secrets.SSH_KEY }}") || echo "无法派生公钥"
     
-        echo "测试 SSH 连接："
-        ssh -vvv -o StrictHostKeyChecking=no xhpadmin@download.happygogo.site 'echo 远端OK'
+    #     echo "测试 SSH 连接："
+    #     ssh -vvv -o StrictHostKeyChecking=no xhpadmin@download.happygogo.site 'echo 远端OK'
         
     # - name: 查看已加载的密钥指纹
     #   run: |
@@ -232,10 +232,39 @@ jobs:
     #     ssh-keygen -y -f <(printf "%s" "${{ secrets.SSH_KEY }}") || echo "无法派生公钥"
 
       
-    - name: upload testfile
+    # - name: upload testfile
+    #   shell: bash
+    #   run: |
+    #     scp  -o StrictHostKeyChecking=no quick-print/test_reports/test_report.html xhpadmin@download.happygogo.site:/www/wwwroot/download.happygogo.site/quick-print-test-report
+
+    - name: 上传测试报告（当前时间戳）
       shell: bash
       run: |
-        scp  -o StrictHostKeyChecking=no quick-print/test_reports/test_report.html xhpadmin@download.happygogo.site:/www/wwwroot/download.happygogo.site/quick-print-test-report
+        set -e
+    
+        # 如果想用东八区本地时间并且 runner 仍是 UTC，可用 date -u 加 8 小时（Ubuntu 可用）
+        # TIMESTAMP=$(date -u -d '+8 hour' '+%Y-%m-%d-%H%M%S')
+    
+        # 如果已经把系统时区改成 Asia/Shanghai 或不强制东八区，就直接：
+        TIMESTAMP=$(date '+%Y-%m-%d-%H%M%S')
+    
+        LOCAL_FILE="quick-print/test_reports/test_report.html"
+        REMOTE_DIR="/www/wwwroot/download.happygogo.site/quick-print-test-report"
+        REMOTE_HOST="download.happygogo.site"
+        REMOTE_USER="xhpadmin"
+    
+        # 确保存在
+        ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "mkdir -p ${REMOTE_DIR}"
+    
+        # 1. 上传并覆盖最新版本
+        scp -o StrictHostKeyChecking=no "${LOCAL_FILE}" ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/test_report.html
+    
+        # 2. 远端复制带时间戳归档
+        ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} \
+          "cp ${REMOTE_DIR}/test_report.html ${REMOTE_DIR}/test_report-${TIMESTAMP}.html"
+    
+        echo "已上传：最新 test_report.html 与归档 test_report-${TIMESTAMP}.html"
+    
       
     # - name: 📤 上传测试报告 (Artifacts)
     #   uses: actions/upload-artifact@v4
