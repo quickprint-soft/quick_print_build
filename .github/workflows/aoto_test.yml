@@ -55,11 +55,10 @@ jobs:
     - name: Clone repository from Gitee with trace
       shell: pwsh
       run: |
-        git clone https://oauth2:${{ secrets.MYUSER_TOKEN }}@github.com/quickprint-soft/quick-print.git
-        # git clone https://oauth2:${{ secrets.MYUSER_TOKEN }}@${{ github.event.client_payload.gitaddress }}
+        #git clone https://oauth2:${{ secrets.MYUSER_TOKEN }}@github.com/quickprint-soft/quick-print.git
+        git clone https://oauth2:${{ secrets.MYUSER_TOKEN }}@${{ github.event.client_payload.gitaddress }}
       
-        # git clone git@gitee.com:charlesabc/quick-print.git
-        # git clone https://oauth2:${{ secrets.GITEE_TOKEN }}@gitee.com/charlesabc/quick-print.git 
+
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
@@ -253,8 +252,10 @@ jobs:
     
         LOCAL_FILE="quick-print/test_reports/test_report.html"
         REMOTE_DIR="/www/wwwroot/download.happygogo.site/quick-print-test-report"
-        REMOTE_HOST="download.happygogo.site"
-        REMOTE_USER="xhpadmin"
+        # REMOTE_HOST="download.happygogo.site"
+        #REMOTE_USER="xhpadmin"
+        REMOTE_USER=${{ github.event.client_payload.publish_user }}
+        REMOTE_HOST=${{ github.event.client_payload.publish_host }}
     
         # 确保存在
         ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "mkdir -p ${REMOTE_DIR}"
