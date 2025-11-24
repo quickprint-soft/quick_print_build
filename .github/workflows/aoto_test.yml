@@ -186,9 +186,25 @@ jobs:
         }
       shell: pwsh
 
-    - name: Check loaded SSH keys
-      shell: bash
-      run: ssh-add -l
+    - name: 列出测试报告文件
+      run: |
+        ls -l quick-print/test_reports/
+        file quick-print/test_reports/test_report.html || true
+    
+    - name: 加载 SSH 私钥
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_KEY }}
+    
+    - name: 查看已加载的密钥指纹
+      run: |
+        echo "ssh-add -l 输出："
+        ssh-add -l || echo "没有加载到任何密钥"
+    
+        # 从私钥派生公钥，方便与你服务器的 authorized_keys 对比
+        echo "派生公钥："
+        ssh-keygen -y -f <(printf "%s" "${{ secrets.SSH_KEY }}") || echo "无法派生公钥"
+
       
     - name: upload testfile
       shell: bash
