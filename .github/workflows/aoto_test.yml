@@ -251,11 +251,12 @@ jobs:
         TIMESTAMP=$(date '+%Y-%m-%d-%H%M%S')
     
         LOCAL_FILE="quick-print/test_reports/test_report.html"
-        REMOTE_DIR="/www/wwwroot/download.happygogo.site/quick-print-test-report"
+        # REMOTE_DIR="/www/wwwroot/download.happygogo.site/quick-print-test-report"
         # REMOTE_HOST="download.happygogo.site"
         #REMOTE_USER="xhpadmin"
         REMOTE_USER=${{ github.event.client_payload.publish_user }}
         REMOTE_HOST=${{ github.event.client_payload.publish_host }}
+        REMOTE_DIR=${{ github.event.client_payload.publish_path }}/quick-print-test-report
     
         # 确保存在
         ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "mkdir -p ${REMOTE_DIR}"
