@@ -1,6 +1,9 @@
 name: GTest CI/CD Pipeline
 
 on:
+  repository_dispatch:
+      types:
+        - gtest_quick_print
   push:
     branches: [ main, develop, master ]
   pull_request:
