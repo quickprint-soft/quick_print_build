@@ -136,15 +136,15 @@ jobs:
       
     - name: 📊 生成 HTML 测试报告
       working-directory: quick-print/test-prj
-        if: always()
-        env:
-          PYTHONIOENCODING: utf-8
-          PYTHONUTF8: "1"
-        run: |
-          chcp 65001 >NUL
-          python -X utf8 generate_test_report.py -i ../test_reports/test_results.xml -o ../test_reports/test_report.html
-        continue-on-error: true
-        shell: pwsh
+      if: always()
+      env:
+        PYTHONIOENCODING: utf-8
+        PYTHONUTF8: "1"
+      run: |
+        chcp 65001 >NUL
+        python -X utf8 generate_test_report.py -i ../test_reports/test_results.xml -o ../test_reports/test_report.html
+      continue-on-error: true
+      shell: pwsh
       
     - name: 📝 生成测试摘要
       if: always()
