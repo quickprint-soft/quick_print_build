@@ -186,8 +186,8 @@ jobs:
       with:
         name: test-reports-${{ github.run_number }}
         path: |
-          test_reports/test_results.xml
-          test_reports/test_report.html
+          # quick-print/test_reports/test_results.xml
+          quick-print/test_reports/test_report.html
         retention-days: 30
         
     - name: 📊 发布测试结果到 PR
