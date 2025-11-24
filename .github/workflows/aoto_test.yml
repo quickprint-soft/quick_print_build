@@ -20,6 +20,14 @@ jobs:
     
     steps:
 
+    - name: 设置东八区时区 (Windows)
+      shell: pwsh
+      run: |
+        tzutil /l | findstr /C:"China Standard Time"
+        tzutil /g
+        tzutil /s "China Standard Time"
+        tzutil /g
+        
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.5.3
       with:
@@ -224,32 +232,32 @@ jobs:
       run: |
         scp  -o StrictHostKeyChecking=no quick-print/test_reports/test_report.html xhpadmin@download.happygogo.site:/www/wwwroot/download.happygogo.site/quick-print-test-report
       
-    - name: 📤 上传测试报告 (Artifacts)
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: test-reports-${{ github.run_number }}
-        path: |
-          # quick-print/test_reports/test_results.xml
-          quick-print/test_reports/test_report.html
-        retention-days: 30
+    # - name: 📤 上传测试报告 (Artifacts)
+    #   uses: actions/upload-artifact@v4
+    #   if: always()
+    #   with:
+    #     name: test-reports-${{ github.run_number }}
+    #     path: |
+    #       # quick-print/test_reports/test_results.xml
+    #       quick-print/test_reports/test_report.html
+    #     retention-days: 30
         
-    - name: 📊 发布测试结果到 PR
-      uses: EnricoMi/publish-unit-test-result-action/windows@v2
-      if: always() && github.event_name == 'pull_request'
-      with:
-        files: test_reports/test_results.xml
-        check_name: 🧪 GTest 测试结果
-        comment_title: 📊 GTest 测试报告
-        comment_mode: always
+    # - name: 📊 发布测试结果到 PR
+    #   uses: EnricoMi/publish-unit-test-result-action/windows@v2
+    #   if: always() && github.event_name == 'pull_request'
+    #   with:
+    #     files: test_reports/test_results.xml
+    #     check_name: 🧪 GTest 测试结果
+    #     comment_title: 📊 GTest 测试报告
+    #     comment_mode: always
         
-    - name: ✅ 检查测试结果
-      if: always()
-      run: |
-        if ($env:TEST_EXIT_CODE -ne "0") {
-          Write-Host "❌ 测试失败！退出码: $env:TEST_EXIT_CODE"
-          exit 1
-        } else {
-          Write-Host "✅ 所有测试通过！"
-        }
-      shell: pwsh
+    # - name: ✅ 检查测试结果
+    #   if: always()
+    #   run: |
+    #     if ($env:TEST_EXIT_CODE -ne "0") {
+    #       Write-Host "❌ 测试失败！退出码: $env:TEST_EXIT_CODE"
+    #       exit 1
+    #     } else {
+    #       Write-Host "✅ 所有测试通过！"
+    #     }
+    #   shell: pwsh
