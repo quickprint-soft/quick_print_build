@@ -19,6 +19,12 @@ jobs:
             vsversion: 2022
     
     steps:
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_KEY }}
+      
     - name: 📥 检出代码
       uses: actions/checkout@v4
       with:
@@ -179,6 +185,15 @@ jobs:
           }
         }
       shell: pwsh
+
+    - name: Check loaded SSH keys
+      shell: bash
+      run: ssh-add -l
+      
+    - name: upload testfile
+      shell: bash
+      run: |
+        scp  -o StrictHostKeyChecking=no quick-print/test_reports/test_report.html xhadmin@download.happygogo.site:/www/wwwroot/download.happygogo.site/quick-print-test-report
       
     - name: 📤 上传测试报告 (Artifacts)
       uses: actions/upload-artifact@v4
