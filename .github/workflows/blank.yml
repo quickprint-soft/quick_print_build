@@ -189,7 +189,7 @@ jobs:
           pwd
           dir 
           cd quick-print/build
-          cmake ../ -G "Visual Studio 17 2022" 
+          cmake ../ -G "Visual Studio 17 2022" -DENABLE_PLUGIN_OBFUSCATION=ON
           # run CMake (additional options like -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE are possible)
           # it is recommended to specify the compiler version used for the build
           # cmake -S . -B cbuild/ -DCRASHPAD_BUILD_EXAMPLES=TRUE -DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_C_COMPILER=cl.exe -DCMAKE_BUILD_TYPE=Release
