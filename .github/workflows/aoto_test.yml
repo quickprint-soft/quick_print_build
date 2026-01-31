@@ -122,6 +122,7 @@ jobs:
 
 
       - name: Get current branch name
+        shell: bash
         id: get_branch
         run: |
           echo "BRANCH=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
@@ -138,6 +139,7 @@ jobs:
           
 
       - name: Generate JENKINS.env
+        shell: bash
         run: |
           echo "export BRANCH=$BRANCH " >> $JENKINS_ENV_PATH
           echo "export UTILS_DIR=$UTILS_DIR" >> $JENKINS_ENV_PATH
