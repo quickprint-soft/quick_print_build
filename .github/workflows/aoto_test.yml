@@ -120,6 +120,35 @@ jobs:
       #     git config --global http.proxy socks5://python:psdemo982@123.60.164.114:11654
 
 
+
+      - name: Get current branch name
+        id: get_branch
+        run: |
+          echo "BRANCH=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
+          echo "BRANCH_NAME=master" >> $GITHUB_ENV
+          # echo "UTILS_DIR=${PWD}/${{github.event.client_payload.project_name}}/myutils" >> $GITHUB_ENV
+          echo "UTILS_DIR=/tmp/myutils" >> $GITHUB_ENV
+          echo "WORK_ROOT_DIR=${PWD}/${{github.event.client_payload.project_name}}" >> $GITHUB_ENV
+          echo "WORKSPACE=${PWD}/${{github.event.client_payload.project_name}}" >> $GITHUB_ENV
+          echo "JENKINS_ENV_PATH=/tmp/.JENKINS.env" >> $GITHUB_ENV
+          # echo "JENKINS_ENV_PATH=${PWD}/${{github.event.client_payload.project_name}}/.JENKINS.env" >> $GITHUB_ENV
+          echo "RELEASE_PACKAGE=123.60.164.114" >> $GITHUB_ENV 
+          echo "JAVA_SSO_PACKAGE=sso-1.0.1.jar"  >> $GITHUB_ENV
+          echo "ISDEBUG=${{github.event.client_payload.isdebug}}" >> $GITHUB_ENV
+          
+
+      - name: Generate JENKINS.env
+        run: |
+          echo "export BRANCH=$BRANCH " >> $JENKINS_ENV_PATH
+          echo "export UTILS_DIR=$UTILS_DIR" >> $JENKINS_ENV_PATH
+          echo "export WORK_ROOT_DIR=$WORK_ROOT_DIR" >> $JENKINS_ENV_PATH
+          if [ "$ISDEBUG" = "true" ]; then
+            echo "============ JENKINS.env Content ============"
+            cat $WORK_ROOT_DIR/.JENKINS.env
+            echo "============================================="
+          fi   
+
+          
       - name: git clone 
         shell: bash
         run: |
