@@ -342,13 +342,6 @@ jobs:
           rm -fr librel64/static
           rm -fr librel64/dll
           
-          # 创建 quick_print_tool.zip 包（包含工具和依赖）
-          mkdir -p quick_print_tool_temp
-          cp librel64/quick-print-tool.exe quick_print_tool_temp/ || echo "quick-print-tool.exe not found"
-          cp librel64/opencv_world4100.dll quick_print_tool_temp/ || echo "opencv_world4100.dll not found"
-          zip -r quick_print_tool.zip quick_print_tool_temp
-          rm -rf quick_print_tool_temp
-          
           mv librel64 QuickPrintAll
           
           
