@@ -124,7 +124,8 @@ jobs:
         shell: pwsh
         run: |
           # $env:GIT_TRACE = "1"
-          git clone {{ github.event.client_payload.gitaddress }}
+          # git clone {{ github.event.client_payload.gitaddress }}
+          git clone git@github.com:quickprint-soft/quick-print.git
         
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
