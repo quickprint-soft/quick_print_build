@@ -120,12 +120,18 @@ jobs:
       #     git config --global http.proxy socks5://python:psdemo982@123.60.164.114:11654
 
 
-      - name: Clone repository from Gitee with trace
-        shell: pwsh
+      - name: git clone 
+        shell: bash
         run: |
-          # $env:GIT_TRACE = "1"
-          # git clone {{ github.event.client_payload.gitaddress }}
-          git clone git@github.com:quickprint-soft/quick-print.git
+          export UTILS_DIR=/tmp/myutils
+          git clone git@gitee.com:charlesabc/myutils.git ${UTILS_DIR}
+          pushd .
+          echo ${UTILS_DIR}
+          cd ${UTILS_DIR}
+          source utils.sh
+          popd 
+          bash /tmp/myutils/quickprint-sys/scripts/clone_code.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          
         
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
