@@ -86,6 +86,15 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
           
+      - name: Cache SSH known hosts
+        id: cache-ssh-hosts
+        uses: actions/cache@v3
+        with:
+          path: ~/.ssh/known_hosts
+          key: ssh-known-hosts-${{ runner.os }}-v1
+          restore-keys: |
+            ssh-known-hosts-${{ runner.os }}-
+            
       - name: show payload
         run: |
           echo "Client payload: ${{ toJson(github.event.client_payload) }}"
@@ -94,22 +103,26 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Add SSH host keys to known hosts
+      - name: Add Gitee ssh-key to known hosts
         shell: bash
         run: |
           mkdir -p $HOME/.ssh
-          # Clear any existing known_hosts file to avoid conflicts
-          rm -f $HOME/.ssh/known_hosts
-          cat >$HOME/.ssh/known_hosts <<EOF
-          github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=
-          github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
-          github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrM0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
-          gitee.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDMzG3r+88lWSDK9fyjcZmYsWGDBDmGoAasKMAmjoFloGt9HRQX2Qp4f9FY2XK/hsHYinvoh5Xytl9iaUNUWMfYR8q6VEMtOO87DgoAFcfKZHt0/nbAg9RoNTKYt6v8tPwYpr7N0JP/01nE4LFsNDnstr6H0bXSAzbKWCETLZfdPV4l2uSpRn3bU0ugoZ0aSKz5Dc/IloBfGCTvkSsxUydMRd/Chpjt6VxncDbp+Fa6pzsseK8OQzrg6Fgc5783EN3EQqZ2skqyCwExtx95BJlfx1B3luZnWfpkwNDnrZRT/Qx0OrWqyf0q6f9uQr+UG1S8qDcUn3e/9onq3rwBri8/
-          gitee.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMuEoYdx6to5oxR60IWj8uoe1aI0X1fKOHWOtLqTg1tsLT1iFwXV5JmFjU46EzeMBV/6EmI1uaRI6HiEPtPtJHE=
-          gitee.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEKxHSJ7084RmkJ4YdEi5tngynE8aZe2uEoVVsB/OvYN
-          EOF
+          cat >$HOME/.ssh/known_hosts <<Eof
+            gitee.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDMzG3r+88lWSDK9fyjcZmYsWGDBDmGoAasKMAmjoFloGt9HRQX2Qp4f9FY2XK/hsHYinvoh5Xytl9iaUNUWMfYR8q6VEMtOO87DgoAFcfKZHt0/nbAg9RoNTKYt6v8tPwYpr7N0JP/01nE4LFsNDnstr6H0bXSAzbKWCETLZfdPV4l2uSpRn3bU0ugoZ0aSKz5Dc/IloBfGCTvkSsxUydMRd/Chpjt6VxncDbp+Fa6pzsseK8OQzrg6Fgc5783EN3EQqZ2skqyCwExtx95BJlfx1B3luZnWfpkwNDnrZRT/Qx0OrWqyf0q6f9uQr+UG1S8qDcUn3e/9onq3rwBri8/
+            gitee.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMuEoYdx6to5oxR60IWj8uoe1aI0X1fKOHWOtLqTg1tsLT1iFwXV5JmFjU46EzeMBV/6EmI1uaRI6HiEPtPtJHE=
+            gitee.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEKxHSJ7084RmkJ4YdEi5tngynE8aZe2uEoVVsB/OvYN
+          Eof
 
-
+      - name: Setup SSH Key
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          cat ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          ssh-keyscan gitee.com >> ~/.ssh/known_hosts
 
 
 
@@ -136,33 +149,27 @@ jobs:
           
 
       - name: Generate JENKINS.env
-        shell: bash
         run: |
-          # Ensure the directory exists and use explicit path
-          mkdir -p /tmp
-          JENKINS_FILE="/tmp/.JENKINS.env"
-          echo "export BRANCH=$BRANCH " >> "$JENKINS_FILE"
-          echo "export UTILS_DIR=$UTILS_DIR" >> "$JENKINS_FILE"
-          echo "export WORK_ROOT_DIR=$WORK_ROOT_DIR" >> "$JENKINS_FILE"
+          echo "export BRANCH=$BRANCH " >> $JENKINS_ENV_PATH
+          echo "export UTILS_DIR=$UTILS_DIR" >> $JENKINS_ENV_PATH
+          echo "export WORK_ROOT_DIR=$WORK_ROOT_DIR" >> $JENKINS_ENV_PATH
           if [ "$ISDEBUG" = "true" ]; then
             echo "============ JENKINS.env Content ============"
-            cat "$JENKINS_FILE"
+            cat $WORK_ROOT_DIR/.JENKINS.env
             echo "============================================="
           fi     
         # working-directory: ./${{ github.event.client_payload.project_name }}
         
       - name: git clone 
-        shell: bash
         run: |
           export UTILS_DIR=/tmp/myutils
-          # git clone git@gitee.com:charlesabc/myutils.git ${UTILS_DIR}
           git clone git@github.com:charlessoft/myutils.git ${UTILS_DIR}
           pushd .
           echo ${UTILS_DIR}
           cd ${UTILS_DIR}
           source utils.sh
           popd 
-          bash /tmp/myutils/quickprint-sys/scripts/clone_code.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          bash /tmp/myutils/quick_print_build/scripts/clone_code.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
 
       - name: Generate  env 
