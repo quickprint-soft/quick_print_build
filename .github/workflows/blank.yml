@@ -145,12 +145,15 @@ jobs:
       - name: Generate JENKINS.env
         shell: bash
         run: |
-          echo "export BRANCH=$BRANCH " >> $JENKINS_ENV_PATH
-          echo "export UTILS_DIR=$UTILS_DIR" >> $JENKINS_ENV_PATH
-          echo "export WORK_ROOT_DIR=$WORK_ROOT_DIR" >> $JENKINS_ENV_PATH
+          # Ensure the directory exists and use explicit path
+          mkdir -p /tmp
+          JENKINS_FILE="/tmp/.JENKINS.env"
+          echo "export BRANCH=$BRANCH " >> "$JENKINS_FILE"
+          echo "export UTILS_DIR=$UTILS_DIR" >> "$JENKINS_FILE"
+          echo "export WORK_ROOT_DIR=$WORK_ROOT_DIR" >> "$JENKINS_FILE"
           if [ "$ISDEBUG" = "true" ]; then
             echo "============ JENKINS.env Content ============"
-            cat $WORK_ROOT_DIR/.JENKINS.env
+            cat "$JENKINS_FILE"
             echo "============================================="
           fi     
         # working-directory: ./${{ github.event.client_payload.project_name }}
