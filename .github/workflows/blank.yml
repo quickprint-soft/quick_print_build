@@ -184,6 +184,57 @@ jobs:
           echo "export UTILS_DIR=$UTILS_DIR" >> $JENKINS_ENV_PATH
 
           
+      # - name: build
+      #   run: |
+      #     pushd .
+      #     cd ${UTILS_DIR}
+      #     source utils.sh
+      #     popd 
+      #     bash ${WORKSPACE}/myutils/quick_print_build/scripts/build_server.sh ${JENKINS_ENV_PATH} || CheckLastResult
+                    
+      # #     pnpm config set registry https://registry.npmjs.org
+      # #     pnpm config get registry
+
+      # #     # #==============
+      # #     # 编译
+
+      # #     bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/build_server.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+          
+      # #     # 编译agent
+      # #     bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/build_agent.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+      # #     # 发布
+      # #     bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/publish_server.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+      # #     bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/publish_agent.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+
+      
+
+      # - name: publish action
+      #   run: |
+      #     pushd .
+      #     cd ${UTILS_DIR}
+      #     source utils.sh
+      #     popd 
+          
+      #     bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/publish_server.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          
+      #     bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/publish_agent.sh ${JENKINS_ENV_PATH} || CheckLastResult
+      
+
+
+      # - name: deploy action
+      #   run: |
+      #     pushd .
+      #     cd ${UTILS_DIR}
+      #     source utils.sh
+      #     popd 
+          
+      #     # bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/develop/deploy_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
+      #     bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/guanlan/docker_deploy.sh  ${JENKINS_ENV_PATH} || CheckLastResult
+
+
       # - name: Setup SSH
       #   uses: webfactory/ssh-agent@v0.5.3
       #   with:
