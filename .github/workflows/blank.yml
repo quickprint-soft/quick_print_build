@@ -343,6 +343,9 @@ jobs:
       #     git log -n 5
       #     cat external\\common\\include\\wrapper_logger.h
           
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
       - name: install requirements
         shell: bash
         run: |
