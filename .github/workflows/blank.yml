@@ -114,6 +114,7 @@ jobs:
           Eof
 
       - name: Setup SSH Key
+        shell: bash
         env:
           SSH_KEY: ${{ secrets.SSH_KEY }}
         run: |
