@@ -114,6 +114,7 @@ jobs:
           Eof
 
       - name: Setup SSH Key
+        shell: bash
         env:
           SSH_KEY: ${{ secrets.SSH_KEY }}
         run: |
@@ -133,6 +134,7 @@ jobs:
       #     detached: true
 
       - name: Get current branch name
+        shell: bash
         id: get_branch
         run: |
           echo "BRANCH=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
@@ -149,6 +151,7 @@ jobs:
           
 
       - name: Generate JENKINS.env
+        shell: bash
         run: |
           echo "export BRANCH=$BRANCH " >> $JENKINS_ENV_PATH
           echo "export UTILS_DIR=$UTILS_DIR" >> $JENKINS_ENV_PATH
@@ -161,6 +164,7 @@ jobs:
         # working-directory: ./${{ github.event.client_payload.project_name }}
         
       - name: git clone 
+        shell: bash
         run: |
           export UTILS_DIR=/tmp/myutils
           git clone git@github.com:charlessoft/myutils.git ${UTILS_DIR}
