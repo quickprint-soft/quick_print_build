@@ -551,8 +551,21 @@ jobs:
           
           mv librel64 QuickPrintAll
           
-          
           zip -r QuickPrintAll.zip QuickPrintAll
+          
+          # Create quick-print-tool.zip with tool and opencv dll
+          mkdir -p quick-print-tool-package
+          cp QuickPrintAll/quick-print-tool.exe quick-print-tool-package/ || echo "quick-print-tool.exe not found, skipping"
+          cp QuickPrintAll/opencv_world4100.dll quick-print-tool-package/ || echo "opencv_world4100.dll not found, skipping"
+          
+          if [ -f "quick-print-tool-package/quick-print-tool.exe" ]; then
+            cd quick-print-tool-package
+            zip -r ../quick-print-tool.zip .
+            cd ..
+            echo "Created quick-print-tool.zip successfully"
+          else
+            echo "quick-print-tool.exe not found, skipping quick-print-tool.zip creation"
+          fi
           
           
           
