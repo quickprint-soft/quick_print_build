@@ -38,6 +38,7 @@ jobs:
       - name: Install dding on non-Windows
         if: runner.os != 'Windows'
         run: |
+          pip install certifi
           pip install dding
           mkdir -p ~/.dding
           dding_secret="${{ github.event.client_payload.secret || env.DEFAULT_DDING_SECRET }}"
@@ -56,6 +57,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          pip install certifi
           pip install dding
           New-Item -Path $HOME\.dding -ItemType Directory -Force
           $dding_secret = "${{ github.event.client_payload.secret || env.DEFAULT_DDING_SECRET }}"
