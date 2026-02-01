@@ -176,7 +176,8 @@ jobs:
           bash /tmp/myutils/quick_print_build/scripts/clone_code.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
 
-      - name: Generate  env 
+      - name: Generate env 
+        shell: bash
         run: |
           export UTILS_DIR=${PWD}/${{github.event.client_payload.project_name}}/myutils
           echo "UTILS_DIR=${PWD}/${{github.event.client_payload.project_name}}/myutils" >> $GITHUB_ENV
