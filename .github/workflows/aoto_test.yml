@@ -125,8 +125,8 @@ jobs:
         shell: bash
         id: get_branch
         run: |
-          echo "BRANCH=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
-          echo "BRANCH_NAME=master" >> $GITHUB_ENV
+          echo "BRANCH_NAME=$(echo ${{ github.event.client_payload.mybranch }} | sed 's|refs/heads/||')"  >> $GITHUB_ENV
+          echo "BRANCH=$(echo ${{ github.event.client_payload.mybranch }} | sed 's|refs/heads/||')"  >> $GITHUB_ENV
           # echo "UTILS_DIR=${PWD}/${{github.event.client_payload.project_name}}/myutils" >> $GITHUB_ENV
           echo "UTILS_DIR=/tmp/myutils" >> $GITHUB_ENV
           echo "WORK_ROOT_DIR=${PWD}/${{github.event.client_payload.project_name}}" >> $GITHUB_ENV
@@ -136,6 +136,8 @@ jobs:
           echo "RELEASE_PACKAGE=123.60.164.114" >> $GITHUB_ENV 
           echo "JAVA_SSO_PACKAGE=sso-1.0.1.jar"  >> $GITHUB_ENV
           echo "ISDEBUG=${{github.event.client_payload.isdebug}}" >> $GITHUB_ENV
+          #           echo "BRANCH=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
+          # echo "BRANCH_NAME=master" >> $GITHUB_ENV
           
 
       - name: Generate JENKINS.env
