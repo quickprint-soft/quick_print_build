@@ -559,6 +559,8 @@ jobs:
           mkdir -p quick-print-tool-package
           cp QuickPrintAll/quick-print-tool.exe quick-print-tool-package/ || echo "quick-print-tool.exe not found, skipping"
           cp QuickPrintAll/opencv_world4100.dll quick-print-tool-package/ || echo "opencv_world4100.dll not found, skipping"
+          cp -r QuickPrintAll/plugins quick-print-tool-package/ || echo "plugins not found, skipping"
+
           
           if [ -f "quick-print-tool-package/quick-print-tool.exe" ]; then
             cd quick-print-tool-package
