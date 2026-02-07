@@ -438,6 +438,93 @@ jobs:
       - name: Build with MSBuild
         run: msbuild -m -t:Build -p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} quick-print/build/quick-print.sln
 
+      - name: Copy required DLLs to output directory
+        shell: pwsh
+        run: |
+          # Define the output directory
+          $outputDir = "quick-print\librel64"
+          
+          # Ensure output directory exists
+          if (-not (Test-Path $outputDir)) {
+            New-Item -ItemType Directory -Path $outputDir -Force
+            Write-Host "Created output directory: $outputDir"
+          }
+          
+          # Define required DLL files with their typical locations
+          $systemDlls = @(
+            @{Name="CRYPT32.dll"; Path="C:\Windows\System32\CRYPT32.dll"},
+            @{Name="WS2_32.dll"; Path="C:\Windows\System32\WS2_32.dll"},
+            @{Name="ADVAPI32.dll"; Path="C:\Windows\System32\ADVAPI32.dll"},
+            @{Name="KERNEL32.dll"; Path="C:\Windows\System32\KERNEL32.dll"},
+            @{Name="USER32.dll"; Path="C:\Windows\System32\USER32.dll"},
+            @{Name="GDI32.dll"; Path="C:\Windows\System32\GDI32.dll"},
+            @{Name="bcrypt.dll"; Path="C:\Windows\System32\bcrypt.dll"}
+          )
+          
+          # Visual C++ Runtime DLLs - check multiple possible locations
+          $vcRuntimePaths = @(
+            "C:\Windows\System32",
+            "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC\*\x64\Microsoft.VC143.CRT",
+            "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Redist\MSVC\*\x64\Microsoft.VC143.CRT"
+          )
+          
+          $vcRuntimeDlls = @("MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll")
+          
+          # Universal CRT DLLs
+          $ucrtDlls = @(
+            "api-ms-win-crt-runtime-l1-1-0.dll",
+            "api-ms-win-crt-string-l1-1-0.dll", 
+            "api-ms-win-crt-stdio-l1-1-0.dll",
+            "api-ms-win-crt-filesystem-l1-1-0.dll",
+            "api-ms-win-crt-heap-l1-1-0.dll",
+            "api-ms-win-crt-time-l1-1-0.dll",
+            "api-ms-win-crt-math-l1-1-0.dll",
+            "api-ms-win-crt-convert-l1-1-0.dll",
+            "api-ms-win-crt-utility-l1-1-0.dll",
+            "api-ms-win-crt-environment-l1-1-0.dll",
+            "api-ms-win-crt-locale-l1-1-0.dll"
+          )
+          
+          Write-Host "Copying system DLLs..."
+          foreach ($dll in $systemDlls) {
+            if (Test-Path $dll.Path) {
+              Copy-Item $dll.Path $outputDir -Force
+              Write-Host "Copied $($dll.Name)"
+            } else {
+              Write-Warning "$($dll.Name) not found at $($dll.Path)"
+            }
+          }
+          
+          Write-Host "Copying Visual C++ Runtime DLLs..."
+          foreach ($vcDll in $vcRuntimeDlls) {
+            $found = $false
+            foreach ($path in $vcRuntimePaths) {
+              $fullPath = Join-Path $path $vcDll
+              $expandedPaths = Get-ChildItem $fullPath -ErrorAction SilentlyContinue | Select-Object -First 1
+              if ($expandedPaths) {
+                Copy-Item $expandedPaths.FullName $outputDir -Force
+                Write-Host "Copied $vcDll from $($expandedPaths.FullName)"
+                $found = $true
+                break
+              }
+            }
+            if (-not $found) {
+              Write-Warning "$vcDll not found in any of the expected locations"
+            }
+          }
+          
+          Write-Host "Copying Universal CRT DLLs..."
+          foreach ($ucrtDll in $ucrtDlls) {
+            $systemPath = "C:\Windows\System32\$ucrtDll"
+            if (Test-Path $systemPath) {
+              Copy-Item $systemPath $outputDir -Force
+              Write-Host "Copied $ucrtDll"
+            } else {
+              Write-Warning "$ucrtDll not found at $systemPath"
+            }
+          }
+          
+          Write-Host "DLL copy operation completed."
 
       - name: Inno Package
         shell: cmd
@@ -555,11 +642,46 @@ jobs:
           
           zip -r QuickPrintAll.zip QuickPrintAll
           
-          # Create quick-print-tool.zip with tool and opencv dll
+          # Create quick-print-tool.zip with tool and specific dll files
           mkdir -p quick-print-tool-package
           cp QuickPrintAll/quick-print-tool.exe quick-print-tool-package/ || echo "quick-print-tool.exe not found, skipping"
           cp -r QuickPrintAll/plugins quick-print-tool-package/ || echo "plugins not found, skipping"
-          cp QuickPrintAll/*.dll quick-print-tool-package/ || echo "*.dll not found, skipping"
+          
+          # Copy specific DLL files (these should now be in the QuickPrintAll directory from Windows build stage)
+          declare -a required_dlls=(
+            "CRYPT32.dll"
+            "WS2_32.dll" 
+            "ADVAPI32.dll"
+            "KERNEL32.dll"
+            "opencv_world4100.dll"
+            "USER32.dll"
+            "GDI32.dll"
+            "MSVCP140.dll"
+            "bcrypt.dll"
+            "VCRUNTIME140.dll"
+            "VCRUNTIME140_1.dll"
+            "api-ms-win-crt-runtime-l1-1-0.dll"
+            "api-ms-win-crt-string-l1-1-0.dll"
+            "api-ms-win-crt-stdio-l1-1-0.dll"
+            "api-ms-win-crt-filesystem-l1-1-0.dll"
+            "api-ms-win-crt-heap-l1-1-0.dll"
+            "api-ms-win-crt-time-l1-1-0.dll"
+            "api-ms-win-crt-math-l1-1-0.dll"
+            "api-ms-win-crt-convert-l1-1-0.dll"
+            "api-ms-win-crt-utility-l1-1-0.dll"
+            "api-ms-win-crt-environment-l1-1-0.dll"
+            "api-ms-win-crt-locale-l1-1-0.dll"
+          )
+          
+          echo "Copying required DLL files to quick-print-tool package..."
+          for dll in "${required_dlls[@]}"; do
+            if [ -f "QuickPrintAll/$dll" ]; then
+              cp "QuickPrintAll/$dll" quick-print-tool-package/
+              echo "✓ Copied $dll"
+            else
+              echo "⚠ Warning: $dll not found in QuickPrintAll/ (this may be expected for some DLLs)"
+            fi
+          done
 
           
           if [ -f "quick-print-tool-package/quick-print-tool.exe" ]; then
