@@ -630,6 +630,8 @@ jobs:
 
   create-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs: msw-msvs
     steps:
       - name: Checkout
@@ -644,12 +646,12 @@ jobs:
       - name: Delete existing release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release delete $RELEASE_DATE --yes || true
+        run: gh release delete $RELEASE_DATE --yes --cleanup-tag || true
 
       - name: Create new release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create $RELEASE_DATE -t "Release $RELEASE_DATE" -n "Automated release for $RELEASE_DATE"
+        run: gh release create $RELEASE_DATE --target "${{ github.sha }}" -t "Release $RELEASE_DATE" -n "Automated release for $RELEASE_DATE"
 
 
       - name: Download Artifacts
@@ -738,9 +740,28 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd ./artifacts
-          gh release upload $RELEASE_DATE ./*.zip
-          gh release upload $RELEASE_DATE ./QuickPrintSetupArtifact/*.exe
-          gh release upload $RELEASE_DATE filelist.txt
+          gh release upload $RELEASE_DATE ./*.zip --clobber || true
+          gh release upload $RELEASE_DATE ./QuickPrintSetupArtifact/*.exe --clobber || true
+          gh release upload $RELEASE_DATE filelist.txt --clobber || true
+
+      - name: Delete existing latest release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release delete latest --yes --cleanup-tag || true
+
+      - name: Create/Update latest release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create latest --target "${{ github.sha }}" -t "Latest" -n "Automated latest release for $RELEASE_DATE"
+
+      - name: Upload Artifacts to Latest Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd ./artifacts
+          gh release upload latest ./*.zip --clobber || true
+          gh release upload latest ./QuickPrintSetupArtifact/*.exe --clobber || true
+          gh release upload latest filelist.txt --clobber || true
           
       - name: LS Artifacts
         run: |
