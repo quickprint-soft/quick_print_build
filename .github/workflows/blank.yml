@@ -384,13 +384,13 @@ jobs:
           python download.py --arch x64 --build_types dbg --mul
           python download.py --arch x64 --build_types rel --mul
 
-          # 检查 download_freeimage.bat 是否存在，如果存在则执行
-          if (Test-Path "download_freeimage.bat") {
-            Write-Host "Found download_freeimage.bat, executing..."
-            cmd /c "download_freeimage.bat"
-          } else {
-            Write-Host "download_freeimage.bat not found, skipping..."
-          }
+          # # 检查 download_freeimage.bat 是否存在，如果存在则执行
+          # if (Test-Path "download_freeimage.bat") {
+          #   Write-Host "Found download_freeimage.bat, executing..."
+          #   cmd /c "download_freeimage.bat"
+          # } else {
+          #   Write-Host "download_freeimage.bat not found, skipping..."
+          # }
           
       - name: CMake
         shell: powershell
