@@ -572,14 +572,14 @@ jobs:
           build_update.bat
           if errorlevel 1 exit 1
           
-      - name: cp update to download server 
-        shell: bash 
-        run: |
-          echo " copy to download server"
-          ls
-          cd quick-print/setup/exe 
-          ls Output
-          bash copy.sh
+      # - name: cp update to download server 
+      #   shell: bash 
+      #   run: |
+      #     echo " copy to download server"
+      #     ls
+      #     cd quick-print/setup/exe 
+      #     ls Output
+      #     bash copy.sh
       - name: Check Status
         if: ${{ success() }}
         shell: pwsh
