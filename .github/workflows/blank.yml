@@ -673,8 +673,9 @@ jobs:
           # Create quick-print-tool.zip with tool and specific dll files
           mkdir -p quick-print-tool-package
           cp QuickPrintAll/quick-print-tool.exe quick-print-tool-package/ || echo "quick-print-tool.exe not found, skipping"
-          cp -r QuickPrintAll/plugins quick-print-tool-package/ || echo "plugins not found, skipping"
-          
+          cp -r QuickPrintAll/plugins quick-print-tool-package/ || echo "plugins not found, skipping
+          cp -r QuickPrintAll/*.dll quick-print-tool-package/ || echo "plugins not found, skipping"
+
           # Copy specific DLL files (these should now be in the QuickPrintAll directory from Windows build stage)
           declare -a required_dlls=(
             "CRYPT32.dll"
