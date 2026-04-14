@@ -31,9 +31,12 @@ jobs:
             vsversion: 2022
     steps:
 
-      # Steps represent a sequence of tasks that will be executed as part of the job
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      # NOTE:
+      # This job uses myutils/clone_code.sh to clone the target source repo.
+      # If we checkout this repository here, the workspace is already non-empty
+      # and clone_code.sh may try to clone into the same path, causing:
+      # "destination path ... already exists and is not an empty directory".
+      # So we intentionally skip checkout in this job.
 
       - name: Install dding on non-Windows
         if: runner.os != 'Windows'
@@ -139,12 +142,26 @@ jobs:
         shell: bash
         id: get_branch
         run: |
-          echo "BRANCH=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
-          echo "BRANCH_NAME=master" >> $GITHUB_ENV
+          BRANCH_FROM_PAYLOAD="${{ github.event.client_payload.mybranch }}"
+          BRANCH_FROM_PAYLOAD="${BRANCH_FROM_PAYLOAD#refs/heads/}"
+          if [ -z "$BRANCH_FROM_PAYLOAD" ]; then
+            BRANCH_FROM_PAYLOAD="master"
+          fi
+          PROJECT_NAME="${{ github.event.client_payload.project_name }}"
+          if [ -z "$PROJECT_NAME" ]; then
+            GIT_ADDRESS="${{ github.event.client_payload.gitaddress }}"
+            PROJECT_NAME="$(basename "${GIT_ADDRESS%.git}")"
+          fi
+          if [ -z "$PROJECT_NAME" ]; then
+            PROJECT_NAME="quick-print"
+          fi
+          echo "BRANCH=$BRANCH_FROM_PAYLOAD" >> $GITHUB_ENV
+          echo "BRANCH_NAME=$BRANCH_FROM_PAYLOAD" >> $GITHUB_ENV
+          echo "PROJECT_NAME=$PROJECT_NAME" >> $GITHUB_ENV
           # echo "UTILS_DIR=${PWD}/${{github.event.client_payload.project_name}}/myutils" >> $GITHUB_ENV
           echo "UTILS_DIR=/tmp/myutils" >> $GITHUB_ENV
-          echo "WORK_ROOT_DIR=${PWD}/${{github.event.client_payload.project_name}}" >> $GITHUB_ENV
-          echo "WORKSPACE=${PWD}/${{github.event.client_payload.project_name}}" >> $GITHUB_ENV
+          echo "WORK_ROOT_DIR=${PWD}/${PROJECT_NAME}" >> $GITHUB_ENV
+          echo "WORKSPACE=${PWD}/${PROJECT_NAME}" >> $GITHUB_ENV
           echo "JENKINS_ENV_PATH=/tmp/.JENKINS.env" >> $GITHUB_ENV
           # echo "JENKINS_ENV_PATH=${PWD}/${{github.event.client_payload.project_name}}/.JENKINS.env" >> $GITHUB_ENV
           echo "RELEASE_PACKAGE=123.60.164.114" >> $GITHUB_ENV 
@@ -168,6 +185,8 @@ jobs:
       - name: git clone 
         shell: bash
         run: |
+          export PYTHONIOENCODING=utf-8
+          export PYTHONUTF8=1
           export UTILS_DIR=/tmp/myutils
           git clone git@github.com:charlessoft/myutils.git ${UTILS_DIR}
           pushd .
@@ -181,8 +200,8 @@ jobs:
       - name: Generate env 
         shell: bash
         run: |
-          export UTILS_DIR=${PWD}/${{github.event.client_payload.project_name}}/myutils
-          echo "UTILS_DIR=${PWD}/${{github.event.client_payload.project_name}}/myutils" >> $GITHUB_ENV
+          export UTILS_DIR=${PWD}/${PROJECT_NAME}/myutils
+          echo "UTILS_DIR=${PWD}/${PROJECT_NAME}/myutils" >> $GITHUB_ENV
           echo "export UTILS_DIR=$UTILS_DIR" >> $JENKINS_ENV_PATH
 
           
@@ -584,6 +603,9 @@ jobs:
         if: ${{ success() }}
         shell: pwsh
         run: |
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          $env:PYTHONIOENCODING = "utf-8"
+          $env:PYTHONUTF8 = "1"
           $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
           Write-Host "Workflow succeeded for $repoName!"
           dding "github action success :) for $repoName"
@@ -592,6 +614,9 @@ jobs:
         if: ${{ failure() }}
         shell: pwsh
         run: |
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          $env:PYTHONIOENCODING = "utf-8"
+          $env:PYTHONUTF8 = "1"
           $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
           Write-Host "Workflow failed for $repoName!"
           dding "github action fail :( $repoName"
