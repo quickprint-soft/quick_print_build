@@ -487,7 +487,7 @@ jobs:
             "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Redist\MSVC\*\x64\Microsoft.VC143.CRT"
           )
           
-          $vcRuntimeDlls = @("MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll", "concrt140.dll")
+          $vcRuntimeDlls = @("MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll", "concrt140.dll", "vcomp140.dll")
           
           # Universal CRT DLLs - check multiple possible locations
           $ucrtPaths = @(
@@ -716,6 +716,7 @@ jobs:
             "VCRUNTIME140.dll"
             "VCRUNTIME140_1.dll"
             "concrt140.dll"
+            "vcomp140.dll"
             "api-ms-win-crt-runtime-l1-1-0.dll"
             "api-ms-win-crt-string-l1-1-0.dll"
             "api-ms-win-crt-stdio-l1-1-0.dll"
